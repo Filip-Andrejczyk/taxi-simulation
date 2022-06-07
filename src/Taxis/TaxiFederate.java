@@ -186,7 +186,7 @@ public class TaxiFederate
         try
         {
             URL[] modules = new URL[]{ (new File("foms/TaxiSim.xml")).toURI().toURL() };
-            rtiamb.createFederationExecution( "TaxiFederation", modules );
+            rtiamb.createFederationExecution( "TaxiSimulation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -208,8 +208,8 @@ public class TaxiFederate
         };
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
-                "TaxiFederateType",   // federate type
-                "TaxiFederation",     // name of federation
+                "TaxiFederate",   // federate type
+                "TaxiSimulation",     // name of federation
                 joinModules );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
@@ -308,7 +308,7 @@ public class TaxiFederate
         //       remain. in that case we'll leave it for them to clean up
         try
         {
-            rtiamb.destroyFederationExecution( "TaxiFederation" );
+            rtiamb.destroyFederationExecution( "TaxiSimulation" );
             log( "Destroyed Federation" );
         }
         catch( FederationExecutionDoesNotExist dne )

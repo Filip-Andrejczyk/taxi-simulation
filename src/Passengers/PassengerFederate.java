@@ -85,7 +85,7 @@ public class PassengerFederate {
                     (new File("foms/TaxiSim.xml")).toURI().toURL(),
             };
 
-            rtiamb.createFederationExecution( "TaxiFederate", modules );
+            rtiamb.createFederationExecution( "TaxiSimulation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -101,7 +101,7 @@ public class PassengerFederate {
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
                 "passenger",   // federate type
-                "TaxiFederate"     // name of federation
+                "TaxiSimulation"     // name of federation
         );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
