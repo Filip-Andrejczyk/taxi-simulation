@@ -25,17 +25,20 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PassengerFederate {
     public static final String READY_TO_RUN = "ReadyToRun";
 
+    int[] areaIds = new int[]{1, 2, 3};
+
     private RTIambassador rtiamb;
     private PassengerAmbassador fedamb;
     private HLAfloat64TimeFactory timeFactory;
     protected EncoderFactory encoderFactory;
-//    public List<Integer> areaIds = new ArrayList<>(Arrays.asList({1, 2, 3, 4, 5}));
-    int[] areaIds = new int[]{1, 2, 3};
+    //    public List<Integer> areaIds = new ArrayList<>(Arrays.asList({1, 2, 3, 4, 5}));
+
     //handle types
     protected ObjectClassHandle areaHandle;
     protected AttributeHandle areaIdHandle;
     protected AttributeHandle areaRideTimesHandle;
     protected InteractionClassHandle joinPassengerQueueHandle;
+    protected InteractionClassHandle executeRideHandle;
 
 
     private void log( String message )
@@ -171,9 +174,16 @@ public class PassengerFederate {
     private void publishAndSubscribe() throws RTIexception
     {
         // subscribe for Area
-        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.ProductStorage" );
+        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Taxis" );
         this.areaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
         this.areaRideTimesHandle = rtiamb.getAttributeHandle( areaHandle, "rideTimes" );
+
+        //subscribe for ExecuteRidew interaction
+        String iname = "HLAinteractionRoot.executeRide";
+        executeRideHandle = rtiamb.getInteractionClassHandle(iname);
+        rtiamb.subscribeInteractionClass(executeRideHandle);
+
+
 //		// package the information into a handle set
         AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
         attributes.add( areaIdHandle );
@@ -182,7 +192,7 @@ public class PassengerFederate {
 
 
 //		publish GetProducts interaction
-        String iname = "HLAinteractionRoot.joinPassengerQueue";
+        iname = "HLAinteractionRoot.joinPassengerQueue";
         joinPassengerQueueHandle = rtiamb.getInteractionClassHandle( iname );
         // do the publication
         rtiamb.publishInteractionClass(joinPassengerQueueHandle);
