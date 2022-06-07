@@ -46,7 +46,7 @@ public class PassengerFederate {
 
     private void log( String message )
     {
-        System.out.println( "TaxiFederate   : " + message );
+        System.out.println( "PassengerFederate   : " + message );
     }
 
 
@@ -177,7 +177,7 @@ public class PassengerFederate {
     private void publishAndSubscribe() throws RTIexception
     {
         // subscribe for Area
-        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Taxis" );
+        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Areas" );
         this.areaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
         this.areaRideTimesHandle = rtiamb.getAttributeHandle( areaHandle, "rideTimes" );
 

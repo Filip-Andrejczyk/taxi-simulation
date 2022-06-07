@@ -33,7 +33,7 @@
                 </attribute>
             </objectClass>
             <objectClass>
-                <name>Passenger</name>
+                <name>Passengers</name>
                 <sharing>PublishSubscribe</sharing>
                 <semantics>Pasazer kozystajacy z uslug taxi</semantics>
                 <attribute>

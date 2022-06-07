@@ -35,7 +35,7 @@ public class AreaFederate {
 
     private void log( String message )
     {
-        System.out.println( "StorageFederate   : " + message );
+        System.out.println( "AreaFederate   : " + message );
     }
 
     private void waitForUser()
@@ -155,7 +155,7 @@ public class AreaFederate {
                     (new File("foms/TaxiSim.xml")).toURI().toURL(),
             };
 
-            rtiamb.createFederationExecution( "Taxi", modules );
+            rtiamb.createFederationExecution( "TaxiSimulation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -174,7 +174,7 @@ public class AreaFederate {
         ////////////////////////////
         rtiamb.joinFederationExecution( federateName,            // name for the federate
                 "Area",   // federate type
-                "Taxi"     // name of federation
+                "TaxiSimulation"     // name of federation
         );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
@@ -233,7 +233,7 @@ public class AreaFederate {
         // 9. register an object to update //
         /////////////////////////////////////
         ObjectInstanceHandle objectHandle = rtiamb.registerObjectInstance( areaHandle );
-        log( "Registered Storage, handle=" + objectHandle );
+        log( "Registered Area, handle=" + objectHandle );
 
         /////////////////////////////////////
         // 10. do the main simulation loop //
@@ -243,9 +243,9 @@ public class AreaFederate {
         // send an interaction.
 
 
-        //TO DOOOOOOOOOOOOO
-//        while( fedamb.isRunning )
-//        {
+//        TO DOOOOOOOOOOOOO
+        while( fedamb.isRunning )
+        {
 //            // update ProductsStorage parameters max and available to current values
 //            AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 //
@@ -256,10 +256,10 @@ public class AreaFederate {
 //            attributes.put( storageAvailableHandle, availableValue.toByteArray() );
 //
 //            rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
-//
-//            advanceTime(1);
-//            log( "Time Advanced to " + fedamb.federateTime );
-//        }
+
+            advanceTime(1);
+            log( "Time Advanced to " + fedamb.federateTime );
+        }
 
         //////////////////////////////////////
         // 11. delete the object we created //

@@ -374,19 +374,19 @@ public class TaxiFederate
         // that we intend to publish this information
 
         // get all the handle information for the attributes of Passengers.Passenger
-        this.passengerHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Passengers.Passenger" );
+        this.passengerHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Passengers" );
         this.passengerDirectionIdHandle = rtiamb.getAttributeHandle( passengerHandle, "directionId" );
         this.passengerOriginIdHandle = rtiamb.getAttributeHandle( passengerHandle, "originId" );
         this.passengerPassengerIdHandle = rtiamb.getAttributeHandle( passengerHandle, "passengerId" );
         // get all the handle information for the attributes of Areas.Area
-        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Areas.Area" );
+        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Areas" );
         this.areaAreaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
         this.areaRideTimesHandle = rtiamb.getAttributeHandle( areaHandle, "rideTimes" );
 
         // get all the handle information for the attributes of Taxis.Taxi
-        this.taxiHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Taxis.Taxi" );
-        this.taxiTaxiIdHandle = rtiamb.getAttributeHandle( areaHandle, "taxiId" );
-        this.taxiAreaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
+        this.taxiHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Taxis" );
+        this.taxiTaxiIdHandle = rtiamb.getAttributeHandle( taxiHandle, "taxiId" );
+        this.taxiAreaIdHandle = rtiamb.getAttributeHandle( taxiHandle, "areaId" );
 
         AttributeHandleSet passengerAttributes = rtiamb.getAttributeHandleSetFactory().create();
         passengerAttributes.add( passengerDirectionIdHandle );
