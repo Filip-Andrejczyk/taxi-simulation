@@ -24,8 +24,8 @@ public class MonitoredVar {
 	 * @param newValue Nowa wartość monitorowana
 	 * @param simTime Wartość czasu symulacyjnego zmiany
 	 */
-	public void setValue(double newValue, double simTime) {
-		this.changes.add(new Change(newValue, simTime));
+	public void setValue(double newValue, double simtime) {
+		this.changes.add(new Change(newValue, simtime));
 		this.actualVal = newValue;
 	}
 
@@ -34,10 +34,9 @@ public class MonitoredVar {
 	}
 
 	public Histogram getHistogram() {
-//		if (histogram == null)
-//			histogram = new Histogram(this);
-//		return histogram;
-		return new Histogram(this);
+		if (histogram == null)
+			histogram = new Histogram(this);
+		return histogram;
 	}
 
 	public ChangesList getChanges() {

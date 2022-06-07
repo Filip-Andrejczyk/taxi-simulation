@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  *  Live plot drawing class (always using SimTime as X-Axis !)

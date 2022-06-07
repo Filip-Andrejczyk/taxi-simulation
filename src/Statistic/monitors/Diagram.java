@@ -9,9 +9,11 @@ package Statistic.monitors;
 	- zapis wykres�w do plik�w w formacie PNG.
 */
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.ComponentOrientation;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -21,6 +23,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+
+import javax.imageio.ImageIO;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 /**
  * Description...
@@ -360,8 +371,6 @@ public class Diagram extends javax.swing.JFrame
 		double max = Statistics.max(mv);
 		double mint = mv.getChanges().get(0).getTime();
 		double maxt = mv.getChanges().getLast().getTime();
-//		double min = mint;
-//		double max = maxt;
 		if (type == DiagramType.DISTRIBUTION) {
 			if (curves.size() > 1) {
 				if (maxValue < max)
