@@ -12,10 +12,4 @@ public class Passenger {
         this.originId = originId;
         this.directionId = directionId;
     }
-
-    //do federata??
-
-    public void joinPassengerQueue(int passengerId){
-
-    }
 }
