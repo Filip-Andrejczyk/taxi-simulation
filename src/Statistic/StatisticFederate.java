@@ -1,4 +1,6 @@
 package Statistic;
 
-public class StatisticFederate {
+
+public class StatisticFederate{
+
 }

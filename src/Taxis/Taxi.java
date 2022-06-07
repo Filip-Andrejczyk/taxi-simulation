@@ -5,16 +5,15 @@ public class Taxi {
     public int taxiId;
     public int areaId;
     private static int idenum = 0;
-    TaxiFederate taxiFederate;
+    TaxiFederateAmbassador taxiFederate;
 
-    public Taxi(int areaId, TaxiFederate taxiFederate) {
+    public Taxi(int areaId, TaxiFederateAmbassador taxiFederate) {
         this.taxiId = idenum++;
         this.areaId = areaId;
         this.taxiFederate = taxiFederate;
     }
 
-    //to do federata te dwie funkcje
-    public void ExecuteRide(Taxi taxi, double time, int destinationId){
+    public void ExecuteRide(double time, int destinationId){
 
     }
 
