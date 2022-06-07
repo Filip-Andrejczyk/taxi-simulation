@@ -40,6 +40,9 @@ public class PassengerFederate {
     protected InteractionClassHandle joinPassengerQueueHandle;
     protected InteractionClassHandle executeRideHandle;
 
+    protected int areaID = 0;
+    protected int areaRideRIMES = 0;
+
 
     private void log( String message )
     {
@@ -82,7 +85,7 @@ public class PassengerFederate {
                     (new File("foms/TaxiSim.xml")).toURI().toURL(),
             };
 
-            rtiamb.createFederationExecution( "ProducerConsumerFederation", modules );
+            rtiamb.createFederationExecution( "Taxi", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
