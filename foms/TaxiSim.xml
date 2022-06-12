@@ -73,14 +73,6 @@
                     <transportation>HLAreliable</transportation>
                     <order>Receive</order>
                 </attribute>
-                <attribute>
-                    <name>rideTimes</name>
-                    <dataType>HLAfloat32BE</dataType>
-                    <updateType>Static</updateType>
-                    <sharing>PublishSubscribe</sharing>
-                    <transportation>HLAreliable</transportation>
-                    <order>Receive</order>
-                </attribute>
             </objectClass>
         </objectClass>
     </objects>
@@ -109,6 +101,17 @@
                 <name>joinTaxiQueue</name>
                 <parameter>
                     <name>taxiId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                </parameter>
+            </interactionClass>
+            <interactionClass>
+                <name>getRideTime</name>
+                <parameter>
+                    <name>originId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                </parameter>
+                <parameter>
+                    <name>destinationId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
             </interactionClass>
