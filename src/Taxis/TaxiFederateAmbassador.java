@@ -170,7 +170,7 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Interaction Received:" );
+        StringBuilder builder = new StringBuilder( "Interaction Received:" + interactionClass);
 
         try{
             if( interactionClass.equals(federate.executeRideHandle) )
@@ -186,6 +186,7 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
         }catch(Exception e){
             e.printStackTrace();
         }
+        log( builder.toString() );
     }
 
 }

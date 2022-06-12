@@ -363,7 +363,7 @@ public class TaxiFederate
     {
         publishTaxiObject();
         subscribeToExecuteRideInteraction();
-        subscribeToPublisNumOfAreasInteraction();
+        subscribeToPublishNumOfAreasInteraction();
     }
 
     private void publishTaxiObject() throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError, InvalidObjectClassHandle, AttributeNotDefined, ObjectClassNotDefined, SaveInProgress, RestoreInProgress, ObjectClassNotPublished {
@@ -386,7 +386,7 @@ public class TaxiFederate
         executeRide_taxiId = rtiamb.getParameterHandle(executeRideHandle, "taxiId");
     }
 
-    private void subscribeToPublisNumOfAreasInteraction() throws RTIexception {
+    private void subscribeToPublishNumOfAreasInteraction() throws RTIexception {
         publishNumOfAreasHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
         rtiamb.subscribeInteractionClass(publishNumOfAreasHandle);
         publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");

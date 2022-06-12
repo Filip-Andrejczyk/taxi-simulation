@@ -1,25 +1,22 @@
 package Passengers;
 
 import hla.rti1516e.*;
+import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
-import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class PassengerFederate {
     public static final String READY_TO_RUN = "ReadyToRun";
@@ -32,24 +29,24 @@ public class PassengerFederate {
     private PassengerAmbassador fedamb;
     private HLAfloat64TimeFactory timeFactory;
     protected EncoderFactory encoderFactory;
-    //    public List<Integer> areaIds = new ArrayList<>(Arrays.asList({1, 2, 3, 4, 5}));
 
     //handle types
 
-    protected InteractionClassHandle joinPassengerQueueHandle;
-    protected ParameterHandle joinPassengerQueue_passengerId;
-
     protected InteractionClassHandle executeRideHandle;
-    protected ParameterHandle executeRide_time;
     protected ParameterHandle executeRide_destinationId;
+    protected ParameterHandle executeRide_passengerId;
+    protected ParameterHandle executeRide_taxiId;
 
     protected InteractionClassHandle publishNumOfAreasHandle;
     protected ParameterHandle publishNumOfAreas_numOfAreas;
+
+    private int numOfAreas = 4;
 
     protected ObjectClassHandle passengerHandler;
     protected AttributeHandle passengerHandler_originId;
     protected AttributeHandle passengerHandler_destinationId;
     protected AttributeHandle passengerHandler_passengerId;
+    protected ObjectInstanceHandle passengerInstanceHandle;
 
 
     private void log( String message )
@@ -180,14 +177,11 @@ public class PassengerFederate {
 
     private void publishAndSubscribe() throws RTIexception
     {
-		//publish GetProducts interaction
-        joinPassengerQueueHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.joinPassengerQueue");
-        rtiamb.publishInteractionClass(joinPassengerQueueHandle);
 
         //subscribe to to executeRide
         subscribeToExecuteRideInteraction();
         //subscribe to PublishNumOfareas() z federata Area
-        subscribeToPublisNumOfAreasInteraction();
+        subscribeToPublishNumOfAreasInteraction();
 
         // do the publication of passenger object
         publishPassengerObject();
@@ -206,32 +200,34 @@ public class PassengerFederate {
         attributesToPublic.add(passengerHandler_destinationId);
 
         rtiamb.publishObjectClassAttributes(passengerHandler, attributesToPublic);
-        //passengerInstanceHandle = rtiamb.registerObjectInstance(passengerHandler);???????????
-    }
-
-    private void subscribeToPublisNumOfAreasInteraction() throws RTIexception {
-        publishNumOfAreasHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
-        rtiamb.subscribeInteractionClass(publishNumOfAreasHandle);
-        publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");
+        passengerInstanceHandle = rtiamb.registerObjectInstance(passengerHandler);
     }
 
     private void subscribeToExecuteRideInteraction() throws RTIexception {
         executeRideHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.executeRide");
         rtiamb.subscribeInteractionClass(executeRideHandle);
-        executeRide_time = rtiamb.getParameterHandle(executeRideHandle, "time");
         executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
+        executeRide_passengerId = rtiamb.getParameterHandle(executeRideHandle, "passengerId");
+        executeRide_taxiId = rtiamb.getParameterHandle(executeRideHandle, "taxiId");
+    }
+
+    private void subscribeToPublishNumOfAreasInteraction() throws RTIexception {
+        publishNumOfAreasHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
+        rtiamb.subscribeInteractionClass(publishNumOfAreasHandle);
+        publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");
     }
 
 
     private void handlePassengerSpawn() throws RTIexception {
         if(getSimTime() >= nextPassengerTime) {
             int numberOfPassengersToSpawn = random.nextInt(3) + 1;
+            //TODO PARAMETRYZACJA ROZKłADU GENEROWANIA PASAŻERÓW
 
             for (int i = 0; i < numberOfPassengersToSpawn; i++){
-                int originId = random.nextInt(5); //we have 4 areas
-                int destinationId = random.nextInt(5); //we have 4 areas
+                int originId = random.nextInt(numOfAreas );
+                int destinationId = random.nextInt(numOfAreas);
                 while (originId == destinationId){
-                    destinationId = random.nextInt(5);
+                    destinationId = random.nextInt(numOfAreas);
                 }
                 Passenger newPassenger = new Passenger(originId, destinationId, this);
                 passengersList.add(newPassenger);
@@ -241,6 +237,44 @@ public class PassengerFederate {
         }
     }
 
+    public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException {
+        HLAinteger32BE buffer = new HLA1516eInteger32BE();
+        int passengerId, destinationId;
+        buffer.decode(theParameters.get(executeRide_passengerId));
+        passengerId = buffer.getValue();
+        buffer.decode(theParameters.get(executeRide_destinationId));
+        destinationId = buffer.getValue();
+        passengersList.removeIf(x -> x.passengerId==passengerId);
+        log("Passenger #"+passengerId+" has finished their ride at area #" + destinationId );
+    }
+
+    public void setNumOfAreas(int numOfAreas){
+        this.numOfAreas = numOfAreas;
+    }
+
+    /**
+     * This method will update all the values of the given object instance. It will
+     * set the flavour of the soda to a random value from the options specified in
+     * the FOM (Cola - 101, Orange - 102, RootBeer - 103, Cream - 104) and it will set
+     * the number of cups to the same value as the current time.
+     * <p/>
+     * Note that we don't actually have to update all the attributes at once, we
+     * could update them individually, in groups or not at all!
+     */
+    public void updateInstanceValues( int originId, int destinationId, int passengerId ) throws RTIexception
+    {
+        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(3);
+
+        HLAinteger32BE _originId = encoderFactory.createHLAinteger32BE(originId);
+        HLAinteger32BE _destinationId = encoderFactory.createHLAinteger32BE(destinationId);
+        HLAinteger32BE _passengerId = encoderFactory.createHLAinteger32BE(passengerId);
+        attributes.put( passengerHandler_originId, _originId.toByteArray() );
+        attributes.put( passengerHandler_destinationId, _destinationId.toByteArray() );;
+        attributes.put( passengerHandler_passengerId, _passengerId.toByteArray() );
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        rtiamb.updateAttributeValues( passengerInstanceHandle, attributes, generateTag(), time );
+    }
 
     protected double getSimTime() {
         return fedamb.federateTime;

@@ -1,7 +1,6 @@
 package Passengers;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
@@ -30,52 +29,35 @@ public class PassengerAmbassador extends NullFederateAmbassador {
         System.out.println( "FederateAmbassador: " + message );
     }
 
-//    @Override
-//    public void receiveInteraction( InteractionClassHandle interactionClass,
-//                                    ParameterHandleValueMap theParameters,
-//                                    byte[] tag,
-//                                    OrderType sentOrdering,
-//                                    TransportationTypeHandle theTransport,
-//                                    LogicalTime time,
-//                                    OrderType receivedOrdering,
-//                                    SupplementalReceiveInfo receiveInfo )
-//            throws FederateInternalError
-//    {
-//        StringBuilder builder = new StringBuilder( "Interaction Received:" );
-//
-//        // print the handle
-//        builder.append( " handle=" + interactionClass );
-//        if( interactionClass.equals(federate.addProductsHandle) )
-//        {
-//            builder.append( " (addProductsHandle)" );
-//        }
-//
-//        // print the tag
-//        builder.append( ", tag=" + new String(tag) );
-//        // print the time (if we have it) we'll get null if we are just receiving
-//        // a forwarded call from the other reflect callback above
-//        if( time != null )
-//        {
-//            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-//        }
-//
-//        // print the parameer information
-//        builder.append( ", parameterCount=" + theParameters.size() );
-//        builder.append( "\n" );
-//        for( ParameterHandle parameter : theParameters.keySet() )
-//        {
-//            // print the parameter handle
-//            builder.append( "\tparamHandle=" );
-//            builder.append( parameter );
-//            // print the parameter value
-//            builder.append( ", paramValue=" );
-//            builder.append( theParameters.get(parameter).length );
-//            builder.append( " bytes" );
-//            builder.append( "\n" );
-//        }
-//
-//        log( builder.toString() );
-//    }
+    @Override
+    public void receiveInteraction( InteractionClassHandle interactionClass,
+                                    ParameterHandleValueMap theParameters,
+                                    byte[] tag,
+                                    OrderType sentOrdering,
+                                    TransportationTypeHandle theTransport,
+                                    LogicalTime time,
+                                    OrderType receivedOrdering,
+                                    SupplementalReceiveInfo receiveInfo )
+            throws FederateInternalError
+    {
+        StringBuilder builder = new StringBuilder( "Interaction Received:" + interactionClass);
+
+        try{
+            if( interactionClass.equals(federate.executeRideHandle) )
+            {
+                federate.handleInteractionExecuteRide(theParameters);
+            }
+            else if( interactionClass.equals(federate.publishNumOfAreasHandle) )
+            {
+                HLAinteger32BE buffer = new HLA1516eInteger32BE();
+                buffer.decode(theParameters.get(federate.publishNumOfAreas_numOfAreas));
+                federate.setNumOfAreas(buffer.getValue());
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        log( builder.toString() );
+    }
 
     @Override
     public void synchronizationPointRegistrationFailed( String label,
@@ -179,79 +161,6 @@ public class PassengerAmbassador extends NullFederateAmbassador {
                 null,
                 sentOrdering,
                 receiveInfo );
-    }
-
-    @Override
-    public void reflectAttributeValues( ObjectInstanceHandle theObject,
-                                        AttributeHandleValueMap theAttributes,
-                                        byte[] tag,
-                                        OrderType sentOrdering,
-                                        TransportationTypeHandle theTransport,
-                                        LogicalTime time,
-                                        OrderType receivedOrdering,
-                                        SupplementalReflectInfo reflectInfo )
-            throws FederateInternalError
-    {
-        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-
-        // print the handle
-        builder.append( " handle=" + theObject );
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the attribute information
-        builder.append( ", attributeCount=" + theAttributes.size() );
-        builder.append( "\n" );
-        for( AttributeHandle attributeHandle : theAttributes.keySet() )
-        {
-            // print the attibute handle
-            builder.append( "\tattributeHandle=" );
-
-            // if we're dealing with Flavor, decode into the appropriate enum value
-            if( attributeHandle.equals(federate.areaIdHandle) )
-            {
-                builder.append( attributeHandle );
-                builder.append( " (areaId)    " );
-                builder.append( ", attributeValue=" );
-                HLAinteger32BE areaId = new HLA1516eInteger32BE();
-                try {
-                    areaId.decode(theAttributes.get(attributeHandle));
-                } catch (DecoderException e) {
-                    e.printStackTrace();
-                }
-                builder.append( areaId.getValue() );
-                federate.areaID = areaId.getValue();
-            }
-            else if( attributeHandle.equals(federate.areaRideRIMES) )
-            {
-                builder.append( attributeHandle );
-                builder.append( " (areaRideTimes)" );
-                builder.append( ", attributeValue=" );
-                HLAinteger32BE areaRideRIMES = new HLA1516eInteger32BE();
-                try {
-                    areaRideRIMES.decode(theAttributes.get(attributeHandle));
-                } catch (DecoderException e) {
-                    e.printStackTrace();
-                }
-                builder.append( areaRideRIMES.getValue() );
-                federate.areaRideRIMES = areaRideRIMES.getValue();
-            }
-            else
-            {
-                builder.append( attributeHandle );
-                builder.append( " (Unknown)   " );
-            }
-
-            builder.append( "\n" );
-        }
-
-        log( builder.toString() );
     }
 
     @Override
