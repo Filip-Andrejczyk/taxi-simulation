@@ -1,13 +1,12 @@
 package Areas;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
-public class AreaAmbassador extends NullFederateAmbassador {
+public class AreaFederateAmbassador extends NullFederateAmbassador {
 
     private AreaFederate federate;
     protected double federateTime        = 0.0;
@@ -21,7 +20,7 @@ public class AreaAmbassador extends NullFederateAmbassador {
 
     protected boolean isRunning       = true;
 
-    public AreaAmbassador(AreaFederate federate )
+    public AreaFederateAmbassador(AreaFederate federate )
     {
         this.federate = federate;
     }

@@ -26,7 +26,7 @@ public class PassengerFederate {
     List<Passenger> passengersList;
 
     private RTIambassador rtiamb;
-    private PassengerAmbassador fedamb;
+    private PassengerFederateAmbassador fedamb;
     private HLAfloat64TimeFactory timeFactory;
     protected EncoderFactory encoderFactory;
 
@@ -80,7 +80,7 @@ public class PassengerFederate {
 
         // connect
         log( "Connecting..." );
-        fedamb = new PassengerAmbassador( this );
+        fedamb = new PassengerFederateAmbassador( this );
         rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
         log( "Creating Federation..." );
 

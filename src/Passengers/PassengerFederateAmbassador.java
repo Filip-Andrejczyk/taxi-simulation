@@ -6,7 +6,7 @@ import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
-public class PassengerAmbassador extends NullFederateAmbassador {
+public class PassengerFederateAmbassador extends NullFederateAmbassador {
 
     private PassengerFederate federate;
 
@@ -23,7 +23,7 @@ public class PassengerAmbassador extends NullFederateAmbassador {
 
     protected boolean isRunning       = true;
 
-    public PassengerAmbassador(PassengerFederate federate) {this.federate = federate;}
+    public PassengerFederateAmbassador(PassengerFederate federate) {this.federate = federate;}
     private void log( String message )
     {
         System.out.println( "FederateAmbassador: " + message );

@@ -1,7 +1,5 @@
 package Areas;
 
-import Passengers.Passenger;
-import Taxis.Taxi;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
@@ -13,7 +11,6 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
-import javafx.util.Pair;
 import org.jgroups.util.Triple;
 import org.jgroups.util.Tuple;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
@@ -21,7 +18,6 @@ import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.io.PushbackInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -31,7 +27,7 @@ public class AreaFederate {
 
     public static final String READY_TO_RUN = "ReadyToRun";
     private RTIambassador rtiamb;
-    private AreaAmbassador fedamb;  // created when we connect
+    private AreaFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
@@ -310,7 +306,7 @@ public class AreaFederate {
 
         // connect
         log( "Connecting..." );
-        fedamb = new AreaAmbassador( this );
+        fedamb = new AreaFederateAmbassador( this );
         rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
 
         //////////////////////////////
