@@ -69,11 +69,11 @@
             <interactionClass>
                 <name>joinPassengerQueue</name>
                 <parameter>
-                    <name>passengerId</name>
+                    <name>areaId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <parameter>
-                    <name>areaId</name>
+                    <name>passengerId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <order>TimeStamp</order>
@@ -97,11 +97,11 @@
             <interactionClass>
                 <name>joinTaxiQueue</name>
                 <parameter>
-                    <name>taxiId</name>
+                    <name>areaId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <parameter>
-                    <name>areaId</name>
+                    <name>taxiId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <order>TimeStamp</order>

@@ -96,11 +96,13 @@ public class TaxiFederate
 
     // caches of handle types - set once we join a federation
 
-    protected InteractionClassHandle joinTaxiQueueHandle;
-
     protected ObjectClassHandle taxiHandle;
     protected AttributeHandle taxiHandle_taxiId;
     protected AttributeHandle taxiHandle_areaId;
+
+    protected InteractionClassHandle joinTaxiQueueHandle;
+    protected ParameterHandle joinTaxiQueue_areaId;
+    protected ParameterHandle joinTaxiQueue_taxiId;
 
     protected InteractionClassHandle executeRideHandle;
     protected ParameterHandle executeRide_time;
