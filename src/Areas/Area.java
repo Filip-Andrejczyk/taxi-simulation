@@ -2,12 +2,14 @@ package Areas;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 
 public class Area {
 
     public int areaId;
-    public List<Double> rideTimes = new ArrayList<>();
+    private Queue<Integer> passengerQueue;
+    private Queue<Integer> taxiQueue;
 
     public Area(int areaId){
         this.areaId = areaId;
