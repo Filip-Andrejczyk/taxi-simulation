@@ -193,106 +193,128 @@ public class AreaAmbassador extends NullFederateAmbassador {
         }
     }
 
-    @Override
-    public void receiveInteraction( InteractionClassHandle interactionClass,
-                                    ParameterHandleValueMap theParameters,
-                                    byte[] tag,
-                                    OrderType sentOrdering,
-                                    TransportationTypeHandle theTransport,
-                                    SupplementalReceiveInfo receiveInfo )
-            throws FederateInternalError
-    {
-        // just pass it on to the other method for printing purposes
-        // passing null as the time will let the other method know it
-        // it from us, not from the RTI
-        this.receiveInteraction( interactionClass,
-                theParameters,
-                tag,
-                sentOrdering,
-                theTransport,
-                null,
-                sentOrdering,
-                receiveInfo );
-    }
+//    @Override
+//    public void receiveInteraction( InteractionClassHandle interactionClass,
+//                                    ParameterHandleValueMap theParameters,
+//                                    byte[] tag,
+//                                    OrderType sentOrdering,
+//                                    TransportationTypeHandle theTransport,
+//                                    SupplementalReceiveInfo receiveInfo )
+//            throws FederateInternalError
+//    {
+//        // just pass it on to the other method for printing purposes
+//        // passing null as the time will let the other method know it
+//        // it from us, not from the RTI
+//        this.receiveInteraction( interactionClass,
+//                theParameters,
+//                tag,
+//                sentOrdering,
+//                theTransport,
+//                null,
+//                sentOrdering,
+//                receiveInfo );
+//    }
 
     @Override
-    public void receiveInteraction( InteractionClassHandle interactionClass,
-                                    ParameterHandleValueMap theParameters,
-                                    byte[] tag,
-                                    OrderType sentOrdering,
-                                    TransportationTypeHandle theTransport,
-                                    LogicalTime time,
-                                    OrderType receivedOrdering,
-                                    SupplementalReceiveInfo receiveInfo )
-            throws FederateInternalError
-    {
-        StringBuilder builder = new StringBuilder( "Interaction Received:" );
-
-        // print the handle
-        builder.append( " handle=" + interactionClass );
-        if( interactionClass.equals(federate.joinPassengerQueueHandle) )
-        {
-            builder.append( " (JoinPassengerQueue)" );
+    public void receiveInteraction(InteractionClassHandle interactionClass,
+                                   ParameterHandleValueMap theParameters,
+                                   byte[] tag,
+                                   OrderType sentOrdering,
+                                   TransportationTypeHandle theTransport,
+                                   LogicalTime time,
+                                   OrderType receivedOrdering,
+                                   SupplementalReceiveInfo receiveInfo) throws FederateInternalError {
+        try {
+            if (interactionClass.equals(federate.joinTaxiQueueHandle)) {
+                federate.handleInteractionJoinTaxiQueue(theParameters);
+            }
+            if (interactionClass.equals(federate.joinPassengerQueueHandle)) {
+                federate.handleInteractionJoinPassengerQueue(theParameters);
+            }
         }
-        else if( interactionClass.equals(federate.joinTaxiQueueHandle) )
-        {
-            builder.append( " (JoinTaxiQueue)" );
+        catch (Exception e) {
+            e.printStackTrace();
         }
-
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the parameer information
-        builder.append( ", parameterCount=" + theParameters.size() );
-        builder.append( "\n" );
-        for( ParameterHandle parameter : theParameters.keySet() )
-        {
-
-            // ????????????????????????????????????????????*****************************
-//            if(parameter.equals(federate.countHandle))
-//            {
-//                builder.append( "\tCOUNT PARAM!" );
-//                byte[] bytes = theParameters.get(federate.countHandle);
-//                HLAinteger32BE count = new HLA1516eInteger32BE();
-//                try {
-//                    count.decode(bytes);
-//                } catch (DecoderException e) {
-//                    e.printStackTrace();
-//                }
-//                int countValue = count.getValue();
-//                builder.append( "\tcount Value=" + countValue );
-//                if( interactionClass.equals(federate.addProductsHandle) )
-//                {
-//                    Storage.getInstance().addTo(countValue);
-//                }
-//                else if( interactionClass.equals(federate.getProductsHandle) )
-//                {
-//                    Storage.getInstance().getFrom(countValue);
-//                }
-//
-//
-//            }
-//            else
-//            {
-//                // print the parameter handle
-//                builder.append( "\tparamHandle=" );
-//                builder.append( parameter );
-//                // print the parameter value
-//                builder.append( ", paramValue=" );
-//                builder.append( theParameters.get(parameter).length );
-//                builder.append( " bytes" );
-//                builder.append( "\n" );
-//            }
-        }
-
-        log( builder.toString() );
     }
+
+//    @Override
+//    public void receiveInteraction( InteractionClassHandle interactionClass,
+//                                    ParameterHandleValueMap theParameters,
+//                                    byte[] tag,
+//                                    OrderType sentOrdering,
+//                                    TransportationTypeHandle theTransport,
+//                                    LogicalTime time,
+//                                    OrderType receivedOrdering,
+//                                    SupplementalReceiveInfo receiveInfo )
+//            throws FederateInternalError
+//    {
+//        StringBuilder builder = new StringBuilder( "Interaction Received:" );
+//
+//        // print the handle
+//        builder.append( " handle=" + interactionClass );
+//        if( interactionClass.equals(federate.joinPassengerQueueHandle) )
+//        {
+//            builder.append( " (JoinPassengerQueue)" );
+//        }
+//        else if( interactionClass.equals(federate.joinTaxiQueueHandle) )
+//        {
+//            builder.append( " (JoinTaxiQueue)" );
+//        }
+//
+//        // print the tag
+//        builder.append( ", tag=" + new String(tag) );
+//        // print the time (if we have it) we'll get null if we are just receiving
+//        // a forwarded call from the other reflect callback above
+//        if( time != null )
+//        {
+//            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+//        }
+//
+//        // print the parameer information
+//        builder.append( ", parameterCount=" + theParameters.size() );
+//        builder.append( "\n" );
+//        for( ParameterHandle parameter : theParameters.keySet() )
+//        {
+//
+//            // ????????????????????????????????????????????*****************************
+////            if(parameter.equals(federate.countHandle))
+////            {
+////                builder.append( "\tCOUNT PARAM!" );
+////                byte[] bytes = theParameters.get(federate.countHandle);
+////                HLAinteger32BE count = new HLA1516eInteger32BE();
+////                try {
+////                    count.decode(bytes);
+////                } catch (DecoderException e) {
+////                    e.printStackTrace();
+////                }
+////                int countValue = count.getValue();
+////                builder.append( "\tcount Value=" + countValue );
+////                if( interactionClass.equals(federate.addProductsHandle) )
+////                {
+////                    Storage.getInstance().addTo(countValue);
+////                }
+////                else if( interactionClass.equals(federate.getProductsHandle) )
+////                {
+////                    Storage.getInstance().getFrom(countValue);
+////                }
+////
+////
+////            }
+////            else
+////            {
+////                // print the parameter handle
+////                builder.append( "\tparamHandle=" );
+////                builder.append( parameter );
+////                // print the parameter value
+////                builder.append( ", paramValue=" );
+////                builder.append( theParameters.get(parameter).length );
+////                builder.append( " bytes" );
+////                builder.append( "\n" );
+////            }
+//        }
+//
+//        log( builder.toString() );
+//    }
 
     @Override
     public void removeObjectInstance( ObjectInstanceHandle theObject,
