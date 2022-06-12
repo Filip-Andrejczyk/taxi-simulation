@@ -26,12 +26,30 @@ public class AreaFederate {
     protected EncoderFactory encoderFactory;     // set when we join
 
     protected ObjectClassHandle areaHandle;
-
     protected AttributeHandle areaIdHandle;
     protected AttributeHandle areaRideTimesHandle;
 
+    protected ObjectClassHandle passengerHandle;
+    protected AttributeHandle passengerHandle_originId;
+    protected AttributeHandle passengerHandle_directionId;
+    protected AttributeHandle passengerHandle_passengerId;
+
+    protected ObjectClassHandle taxiHandle;
+    protected AttributeHandle taxiHandle_areaId;
+    protected AttributeHandle taxiHandle_taxiId;
+
     protected InteractionClassHandle joinPassengerQueueHandle;
+    protected ParameterHandle joinPassengerQueue_passengerId;
+    protected ParameterHandle joinPassengerQueue_areaId;
+
     protected InteractionClassHandle joinTaxiQueueHandle;
+    protected ParameterHandle joinTaxiQueue_taxiId;
+    protected ParameterHandle joinTaxiQueue_areaId;
+
+
+    protected InteractionClassHandle executeRide;
+    protected InteractionClassHandle publishNumOfAreas;
+
 
     private void log( String message )
     {
@@ -86,27 +104,58 @@ public class AreaFederate {
 
     private void publishAndSubscribe() throws RTIexception
     {
-//		publish ProductsStrorage object
-        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Areas" );
-        this.areaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
-        this.areaRideTimesHandle = rtiamb.getAttributeHandle( areaHandle, "rideTimes" );
-//		// package the information into a handle set
-        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-        attributes.add( areaIdHandle );
-        attributes.add( areaRideTimesHandle );
-//
-        rtiamb.publishObjectClassAttributes( areaHandle, attributes );
+        //public own interactions:
+        executeRide = rtiamb.getInteractionClassHandle("HLAinteractionRoot.executeRide");
+        publishNumOfAreas = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
+        rtiamb.publishInteractionClass(executeRide);
+        rtiamb.publishInteractionClass(publishNumOfAreas);
 
-        // subscribe for joinPassengerQueue interaction
-        String iname = "HLAinteractionRoot.joinPassengerQueue";
-        joinPassengerQueueHandle = rtiamb.getInteractionClassHandle( iname );
-        rtiamb.subscribeInteractionClass(joinPassengerQueueHandle);
+        //sub for joinTaxiqueue:
+        subscribeToJoinTaxiQueueInteraction();
+        //sub for joinPassengerQueue:
+        subscribeToJoinPassengerQueueInteraction();
 
-        // subscribe for joinTaxiQueue interaction
-        iname = "HLAinteractionRoot.joinTaxiQueue";
-        joinTaxiQueueHandle = rtiamb.getInteractionClassHandle( iname );
-        rtiamb.subscribeInteractionClass(joinTaxiQueueHandle);
+        //sub for passenger and taxi objects
+        subscribeToPassengerObject();
+        subscribeToTaxiObject();
     }
+
+    private void subscribeToPassengerObject() throws RTIexception {
+        passengerHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Passengers");
+        passengerHandle_passengerId = rtiamb.getAttributeHandle(passengerHandle, "passengerId");
+        passengerHandle_originId = rtiamb.getAttributeHandle(passengerHandle, "originId");
+        passengerHandle_directionId = rtiamb.getAttributeHandle(passengerHandle, "directionId");
+        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
+        attributes.add(passengerHandle_passengerId);
+        attributes.add(passengerHandle_originId);
+        attributes.add(passengerHandle_directionId);
+        rtiamb.subscribeObjectClassAttributes(passengerHandle, attributes);
+    }
+
+    private void subscribeToTaxiObject() throws RTIexception {
+        taxiHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Taxis");
+        taxiHandle_taxiId = rtiamb.getAttributeHandle(taxiHandle, "taxiId");
+        taxiHandle_areaId = rtiamb.getAttributeHandle(taxiHandle, "areaId");
+        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
+        attributes.add(taxiHandle_taxiId);
+        attributes.add(taxiHandle_areaId);
+        rtiamb.subscribeObjectClassAttributes(taxiHandle, attributes);
+    }
+
+    private void subscribeToJoinTaxiQueueInteraction() throws RTIexception {
+        joinTaxiQueueHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.joinTaxiQueue");
+        rtiamb.subscribeInteractionClass(joinTaxiQueueHandle);
+        joinTaxiQueue_taxiId = rtiamb.getParameterHandle(joinTaxiQueueHandle, "taxiId");
+        joinTaxiQueue_areaId = rtiamb.getParameterHandle(joinTaxiQueueHandle, "areaId");
+    }
+
+    private void subscribeToJoinPassengerQueueInteraction() throws RTIexception {
+        joinPassengerQueueHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.joinPassengerQueue");
+        rtiamb.subscribeInteractionClass(joinPassengerQueueHandle);
+        joinPassengerQueue_passengerId = rtiamb.getParameterHandle(joinPassengerQueueHandle, "passengerId");
+        joinPassengerQueue_areaId = rtiamb.getParameterHandle(joinPassengerQueueHandle, "areaId");
+    }
+
 
     private void advanceTime( double timestep ) throws RTIexception
     {
