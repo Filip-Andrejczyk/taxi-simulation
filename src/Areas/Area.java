@@ -14,4 +14,11 @@ public class Area {
     public Area(int areaId){
         this.areaId = areaId;
     }
+
+    public void addTaxiToQueue(int taxiId){
+        taxiQueue.add(taxiId);
+    }
+    public void addPassengerToQueue(int passengerId){
+        passengerQueue.add(passengerId);
+    }
 }

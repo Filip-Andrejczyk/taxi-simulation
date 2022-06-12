@@ -1,6 +1,7 @@
 package Areas;
 
 import hla.rti1516e.*;
+import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
@@ -10,12 +11,15 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AreaFederate {
 
@@ -24,6 +28,7 @@ public class AreaFederate {
     private AreaAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
+    private List<Area> areasList;
 
     protected ObjectClassHandle areaHandle;
     protected AttributeHandle areaIdHandle;
@@ -68,6 +73,13 @@ public class AreaFederate {
         {
             log( "Error while waiting for user input: " + e.getMessage() );
             e.printStackTrace();
+        }
+    }
+
+    private void defineSimulationObjects() throws RTIexception {
+        areasList = new ArrayList<>(4);
+        for (int i = 0; i < 4; i++) {
+            areasList.add(new Area(i));
         }
     }
 
@@ -171,6 +183,42 @@ public class AreaFederate {
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
 
         }
+    }
+
+    public void handleInteractionJoinTaxiQueue(ParameterHandleValueMap params) throws DecoderException {
+        HLAinteger32BE tmp = new HLA1516eInteger32BE();
+
+        tmp.decode(params.get(joinTaxiQueue_taxiId));
+        int taxiId = tmp.getValue();
+
+        tmp.decode(params.get(joinTaxiQueue_areaId));
+        int areaId = tmp.getValue();
+
+        Area area = areasList.get(areaId);
+        area.addTaxiToQueue(taxiId);
+
+        log("czas ["+getSimTime()+"] Taxi o id "+taxiId+" ustawia się w kolejce w rejonie ("+areaId+")");
+
+    }
+
+    public void handleInteractionJoinPassengerQueue(ParameterHandleValueMap params) throws DecoderException {
+        HLAinteger32BE tmp = new HLA1516eInteger32BE();
+
+        tmp.decode(params.get(joinPassengerQueue_passengerId));
+        int passengerId = tmp.getValue();
+
+        tmp.decode(params.get(joinPassengerQueue_areaId));
+        int areaId = tmp.getValue();
+
+        Area area = areasList.get(areaId);
+        area.addPassengerToQueue(passengerId);
+
+        log("czas ["+getSimTime()+"] Pasażer o id "+passengerId+" ustawia się w kolejce w rejonie ("+areaId+")");
+
+    }
+
+    protected double getSimTime() {
+        return fedamb.federateTime;
     }
 
     private byte[] generateTag()
