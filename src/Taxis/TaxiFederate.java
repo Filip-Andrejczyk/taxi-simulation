@@ -1,6 +1,7 @@
 package Taxis;
 
 import hla.rti1516e.*;
+import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
@@ -8,6 +9,7 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -105,8 +107,9 @@ public class TaxiFederate
     protected ParameterHandle joinTaxiQueue_taxiId;
 
     protected InteractionClassHandle executeRideHandle;
-    protected ParameterHandle executeRide_time;
     protected ParameterHandle executeRide_destinationId;
+    protected ParameterHandle executeRide_passengerId;
+    protected ParameterHandle executeRide_taxiId;
 
     protected InteractionClassHandle publishNumOfAreasHandle;
     protected ParameterHandle publishNumOfAreas_numOfAreas;
@@ -385,14 +388,25 @@ public class TaxiFederate
     private void subscribeToExecuteRideInteraction() throws RTIexception {
         executeRideHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.executeRide");
         rtiamb.subscribeInteractionClass(executeRideHandle);
-        executeRide_time = rtiamb.getParameterHandle(executeRideHandle, "time");
         executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
+        executeRide_passengerId = rtiamb.getParameterHandle(executeRideHandle, "passengerId");
+        executeRide_taxiId = rtiamb.getParameterHandle(executeRideHandle, "taxiId");
     }
 
     private void subscribeToPublisNumOfAreasInteraction() throws RTIexception {
         publishNumOfAreasHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
         rtiamb.subscribeInteractionClass(publishNumOfAreasHandle);
         publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");
+    }
+
+    public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException {
+        HLAinteger32BE buffer = new HLA1516eInteger32BE();
+        int taxiId, areaId;
+        buffer.decode(theParameters.get(executeRide_taxiId));
+        taxiId = buffer.getValue();
+        buffer.decode(theParameters.get(executeRide_destinationId));
+        areaId = buffer.getValue();
+        //zmiany obiektu + wywołanie jointaxiqueue
     }
 
     /**
