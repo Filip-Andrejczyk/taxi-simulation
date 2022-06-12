@@ -61,19 +61,6 @@
                     <order>TimeStamp</order>
                 </attribute>
             </objectClass>
-            <objectClass>
-                <name>Areas</name>
-                <sharing>PublishSubscribe</sharing>
-                <semantics>Region taxi</semantics>
-                <attribute>
-                    <name>areaId</name>
-                    <dataType>HLAinteger32BE</dataType>
-                    <updateType>Static</updateType>
-                    <sharing>PublishSubscribe</sharing>
-                    <transportation>HLAreliable</transportation>
-                    <order>TimeStamp</order>
-                </attribute>
-            </objectClass>
         </objectClass>
     </objects>
     <interactions>
@@ -94,15 +81,15 @@
             <interactionClass>
                 <name>executeRide</name>
                 <parameter>
-                    <name>time</name>
-                    <dataType>HLAfloat32BE</dataType>
-                </parameter>
-                <parameter>
                     <name>destinationId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <parameter>
                     <name>passengerId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                </parameter>
+                <parameter>
+                    <name>taxiId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <order>TimeStamp</order>
@@ -120,9 +107,9 @@
                 <order>TimeStamp</order>
             </interactionClass>
             <interactionClass>
-                <name>leaveTaxi</name>
+                <name>publishNumOfAreas</name>
                 <parameter>
-                    <name>passengerId</name>
+                    <name>numOfAreas</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <order>TimeStamp</order>

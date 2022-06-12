@@ -79,20 +79,6 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
         return value.getValue();
     }
 
-    private float[] decodeFloatArray( byte[] bytes )
-    {
-//        HLAvariableArray<HLAfloat32BE> value = federate.encoderFactory.createHLAvariableArray);
-//        // decode
-//        try
-//        {
-//            value.decode( bytes );
-//        }
-//        catch( DecoderException de ) {
-//            return new float[]{1.0f};
-//        }
-        return new float[]{1.0f};
-    }
-
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////// RTI Callback Methods //////////////////////////
     //////////////////////////////////////////////////////////////////////////
@@ -216,37 +202,30 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
             if( attributeHandle.equals(federate.passengerDirectionIdHandle) )
             {
                 builder.append( attributeHandle );
-                builder.append( " (DirectionId)    " );
+                builder.append( "(DirectionId)" );
                 builder.append( ", attributeValue=" );
                 builder.append( decodeInt(theAttributes.get(attributeHandle)) );
             }
             else if( attributeHandle.equals(federate.passengerOriginIdHandle) )
             {
                 builder.append( attributeHandle );
-                builder.append( " (OriginId)" );
+                builder.append( "(OriginId)" );
                 builder.append( ", attributeValue=" );
                 builder.append( decodeInt(theAttributes.get(attributeHandle)) );
             }
             else if( attributeHandle.equals(federate.passengerPassengerIdHandle) )
             {
                 builder.append( attributeHandle );
-                builder.append( " (PassengerId)" );
+                builder.append( "(PassengerId)" );
                 builder.append( ", attributeValue=" );
                 builder.append( decodeInt(theAttributes.get(attributeHandle)) );
             }
             else if( attributeHandle.equals(federate.areaAreaIdHandle) )
             {
                 builder.append( attributeHandle );
-                builder.append( " (AreaId)" );
+                builder.append( "(AreaId)" );
                 builder.append( ", attributeValue=" );
                 builder.append( decodeInt(theAttributes.get(attributeHandle)) );
-            }
-            else if( attributeHandle.equals(federate.areaRideTimesHandle) )
-            {
-                builder.append( attributeHandle );
-                builder.append( " (RideTimes)" );
-                builder.append( ", attributeValue=" );
-                builder.append( decodeFloatArray(theAttributes.get(attributeHandle)) );
             }
             else
             {
