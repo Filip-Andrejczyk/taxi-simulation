@@ -3,12 +3,12 @@ package Taxis;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import org.jgroups.util.Tuple;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 import java.io.BufferedReader;
@@ -17,8 +17,6 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * This is an example federate demonstrating how to properly use the IEEE 1516-2010 (HLA Evolved)
@@ -61,7 +59,6 @@ import java.util.Random;
  * main simulation loop and triggers most of the important behaviour. To make the code
  * simpler to read and navigate, many of the important HLA activities are broken down
  * into separate methods. For example, if you want to know how to send an interaction,
- * see the {@link #sendInteraction()} method.
  *
  * With regard to the FederateAmbassador, it will log all incoming information. Thus,
  * if it receives any reflects or interactions etc... you will be notified of them.
@@ -99,12 +96,9 @@ public class TaxiFederate
     // caches of handle types - set once we join a federation
 
     protected ObjectClassHandle taxiHandle;
+    protected ObjectInstanceHandle taxiInstanceHandle;
     protected AttributeHandle taxiHandle_taxiId;
     protected AttributeHandle taxiHandle_areaId;
-
-    protected InteractionClassHandle joinTaxiQueueHandle;
-    protected ParameterHandle joinTaxiQueue_areaId;
-    protected ParameterHandle joinTaxiQueue_taxiId;
 
     protected InteractionClassHandle executeRideHandle;
     protected ParameterHandle executeRide_destinationId;
@@ -113,6 +107,11 @@ public class TaxiFederate
 
     protected InteractionClassHandle publishNumOfAreasHandle;
     protected ParameterHandle publishNumOfAreas_numOfAreas;
+
+    private int numOfAreas = 4;
+    private int numOfTaxis = 8;
+
+    private ArrayList<Taxi> taxis = new ArrayList<Taxi>();
 
 
     //----------------------------------------------------------
@@ -255,11 +254,11 @@ public class TaxiFederate
         publishAndSubscribe();
         log( "Published and Subscribed" );
 
-        /////////////////////////////////////
-        // 9. register an object to update //
-        /////////////////////////////////////
-        ObjectInstanceHandle objectHandle = registerObject();
-        log( "Registered Object, handle=" + objectHandle );
+//        /////////////////////////////////////
+//        // 9. register an object to update //
+//        /////////////////////////////////////
+//        ObjectInstanceHandle objectHandle = registerObject();
+//        log( "Registered Object, handle=" + objectHandle );
 
         /////////////////////////////////////
         // 10. do the main simulation loop //
@@ -267,24 +266,30 @@ public class TaxiFederate
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-        for( int i = 0; i < ITERATIONS; i++ )
-        {
-            // 9.1 update the attribute values of the instance //
-            updateAttributeValues( objectHandle );
 
-            // 9.2 send an interaction
-            sendInteraction();
+        waitForUser();//wait for user to confirm that area has subscribed to taxi object
 
-            // 9.3 request a time advance and wait until we get it
-            advanceTime( 1.0 );
-            log( "Time Advanced to " + fedamb.federateTime );
+        for(int i=0, j=0; i<numOfTaxis; i++, j++){
+            if(j>=numOfAreas){
+                j=0;
+            }
+            taxis.add(new Taxi(j, this));
         }
 
-        //////////////////////////////////////
-        // 11. delete the object we created //
-        //////////////////////////////////////
-        deleteObject( objectHandle );
-        log( "Deleted Object, handle=" + objectHandle );
+        while(fedamb.isRunning){
+
+//            for( int i = 0; i < ITERATIONS; i++ )
+//            {
+                advanceTime( 1.0 );
+                log( "Time Advanced to " + fedamb.federateTime );
+//            }
+        }
+
+//        //////////////////////////////////////
+//        // 11. delete the object we created //
+//        //////////////////////////////////////
+//        deleteObject( objectHandle );
+//        log( "Deleted Object, handle=" + objectHandle );
 
         ////////////////////////////////////
         // 12. resign from the federation //
@@ -326,7 +331,6 @@ public class TaxiFederate
         //       different RTI implementation. As such, we've isolated it into a
         //       method so that any change only needs to happen in a couple of spots
         HLAfloat64Interval lookahead = timeFactory.makeInterval( fedamb.federateLookahead );
-
         ////////////////////////////
         // enable time regulation //
         ////////////////////////////
@@ -357,19 +361,7 @@ public class TaxiFederate
      */
     private void publishAndSubscribe() throws RTIexception
     {
-        ///////////////////////////////////////////////
-        // publish all attributes of Food.Drink.Soda //
-        ///////////////////////////////////////////////
-        // before we can register instance of the object class Food.Drink.Soda and
-        // update the values of the various attributes, we need to tell the RTI
-        // that we intend to publish this information
         publishTaxiObject();
-        joinTaxiQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.joinTaxiQueue" );
-        rtiamb.publishInteractionClass( joinTaxiQueueHandle );
-
-        //////////////////////////////////////////////////////////////
-        // subscribe to the executeRide & joinTaxiQueue interaction //
-        //////////////////////////////////////////////////////////////
         subscribeToExecuteRideInteraction();
         subscribeToPublisNumOfAreasInteraction();
     }
@@ -383,6 +375,7 @@ public class TaxiFederate
         attributesToPublic.add(taxiHandle_taxiId);
         attributesToPublic.add(taxiHandle_areaId);
         rtiamb.publishObjectClassAttributes(taxiHandle, attributesToPublic);
+        taxiInstanceHandle = rtiamb.registerObjectInstance(taxiHandle);
     }
 
     private void subscribeToExecuteRideInteraction() throws RTIexception {
@@ -399,14 +392,18 @@ public class TaxiFederate
         publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");
     }
 
-    public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException {
+    public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException, RTIexception {
         HLAinteger32BE buffer = new HLA1516eInteger32BE();
         int taxiId, areaId;
         buffer.decode(theParameters.get(executeRide_taxiId));
         taxiId = buffer.getValue();
         buffer.decode(theParameters.get(executeRide_destinationId));
         areaId = buffer.getValue();
-        //zmiany obiektu + wywołanie jointaxiqueue
+        taxis.get(taxiId).updateAreaId(areaId);
+    }
+
+    public void setNumOfAreas(int numOfAreas){
+        this.numOfAreas = numOfAreas;
     }
 
     /**
@@ -428,59 +425,19 @@ public class TaxiFederate
      * Note that we don't actually have to update all the attributes at once, we
      * could update them individually, in groups or not at all!
      */
-    private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception
+    public void updateInstanceValues( int taxiId, int areaId ) throws RTIexception
     {
-//        ///////////////////////////////////////////////
-//        // create the necessary container and values //
-//        ///////////////////////////////////////////////
-//        // create a new map with an initial capacity - this will grow as required
-//        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
-//
-//        // create the collection to store the values in, as you can see
-//        // this is quite a lot of work. You don't have to use the encoding
-//        // helpers if you don't want. The RTI just wants an arbitrary byte[]
-//
-//        // generate the value for the number of cups (same as the timestep)
-//        HLAinteger16BE cupsValue = encoderFactory.createHLAinteger16BE( getTimeAsShort() );
-//        attributes.put( cupsHandle, cupsValue.toByteArray() );
-//
-//        // generate the value for the flavour on our magically flavour changing drink
-//        // the values for the enum are defined in the FOM
-//        int randomValue = 101 + new Random().nextInt(3);
-//        HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE( randomValue );
-//        attributes.put( flavHandle, flavValue.toByteArray() );
-//
-//        //////////////////////////
-//        // do the actual update //
-//        //////////////////////////
-//        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
-//
-//        // note that if you want to associate a particular timestamp with the
-//        // update. here we send another update, this time with a timestamp:
-//        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-//        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag(), time );
+        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+
+        HLAinteger32BE _taxiId = encoderFactory.createHLAinteger32BE(taxiId);
+        HLAinteger32BE _areaId = encoderFactory.createHLAinteger32BE(areaId);
+        attributes.put( taxiHandle_taxiId, _taxiId.toByteArray() );
+        attributes.put( taxiHandle_taxiId, _areaId.toByteArray() );
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        rtiamb.updateAttributeValues( taxiInstanceHandle, attributes, generateTag(), time );
     }
 
-    /**
-     * This method will send out an interaction of the type FoodServed.DrinkServed. Any
-     * federates which are subscribed to it will receive a notification the next time
-     * they tick(). This particular interaction has no parameters, so you pass an empty
-     * map, but the process of encoding them is the same as for attributes.
-     */
-    private void sendInteraction() throws RTIexception
-    {
-//        //////////////////////////
-//        // send the interaction //
-//        //////////////////////////
-//        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
-//        rtiamb.sendInteraction( servedHandle, parameters, generateTag() );
-//
-//        // if you want to associate a particular timestamp with the
-//        // interaction, you will have to supply it to the RTI. Here
-//        // we send another interaction, this time with a timestamp:
-//        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-//        rtiamb.sendInteraction( servedHandle, parameters, generateTag(), time );
-    }
 
     /**
      * This method will request a time advance to the current time, plus the given

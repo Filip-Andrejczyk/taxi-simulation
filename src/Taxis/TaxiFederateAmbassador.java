@@ -20,6 +20,7 @@ import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.encoding.HLAvariableArray;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -47,6 +48,7 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
 
     protected boolean isAnnounced        = false;
     protected boolean isReadyToRun       = false;
+    public boolean isRunning = true;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -136,96 +138,6 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
     }
 
     @Override
-    public void discoverObjectInstance( ObjectInstanceHandle theObject,
-                                        ObjectClassHandle theObjectClass,
-                                        String objectName )
-            throws FederateInternalError
-    {
-        log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
-                theObjectClass + ", name=" + objectName );
-    }
-
-    @Override
-    public void reflectAttributeValues( ObjectInstanceHandle theObject,
-                                        AttributeHandleValueMap theAttributes,
-                                        byte[] tag,
-                                        OrderType sentOrder,
-                                        TransportationTypeHandle transport,
-                                        SupplementalReflectInfo reflectInfo )
-            throws FederateInternalError
-    {
-        // just pass it on to the other method for printing purposes
-        // passing null as the time will let the other method know it
-        // it from us, not from the RTI
-        reflectAttributeValues( theObject,
-                theAttributes,
-                tag,
-                sentOrder,
-                transport,
-                null,
-                sentOrder,
-                reflectInfo );
-    }
-
-    @Override
-    public void reflectAttributeValues( ObjectInstanceHandle theObject,
-                                        AttributeHandleValueMap theAttributes,
-                                        byte[] tag,
-                                        OrderType sentOrdering,
-                                        TransportationTypeHandle theTransport,
-                                        LogicalTime time,
-                                        OrderType receivedOrdering,
-                                        SupplementalReflectInfo reflectInfo )
-            throws FederateInternalError
-    {
-        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-
-        // print the handle
-        builder.append( " handle=" + theObject );
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the attribute information
-        builder.append( ", attributeCount=" + theAttributes.size() );
-        builder.append( "\n" );
-        for( AttributeHandle attributeHandle : theAttributes.keySet() )
-        {
-            // print the attibute handle
-            builder.append( "\tattributeHandle=" );
-
-            if( attributeHandle.equals(federate.taxiHandle_areaId) )
-            {
-                builder.append( attributeHandle );
-                builder.append( "(areaId)" );
-                builder.append( ", attributeValue=" );
-                builder.append( decodeInt(theAttributes.get(attributeHandle)) );
-            }
-            else if( attributeHandle.equals(federate.taxiHandle_taxiId) )
-            {
-                builder.append( attributeHandle );
-                builder.append( "(taxiId)" );
-                builder.append( ", attributeValue=" );
-                builder.append( decodeInt(theAttributes.get(attributeHandle)) );
-            }
-            else
-            {
-                builder.append( attributeHandle );
-                builder.append( " (Unknown)   " );
-            }
-
-            builder.append( "\n" );
-        }
-
-        log( builder.toString() );
-    }
-
-    @Override
     public void receiveInteraction( InteractionClassHandle interactionClass,
                                     ParameterHandleValueMap theParameters,
                                     byte[] tag,
@@ -265,22 +177,15 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
             {
                 federate.handleInteractionExecuteRide(theParameters);
             }
+            else if( interactionClass.equals(federate.publishNumOfAreasHandle) )
+            {
+                HLAinteger32BE buffer = new HLA1516eInteger32BE();
+                buffer.decode(theParameters.get(federate.publishNumOfAreas_numOfAreas));
+                federate.setNumOfAreas(buffer.getValue());
+            }
         }catch(Exception e){
             e.printStackTrace();
         }
     }
 
-    @Override
-    public void removeObjectInstance( ObjectInstanceHandle theObject,
-                                      byte[] tag,
-                                      OrderType sentOrdering,
-                                      SupplementalRemoveInfo removeInfo )
-            throws FederateInternalError
-    {
-        log( "Object Removed: handle=" + theObject );
-    }
-
-    //----------------------------------------------------------
-    //                     STATIC METHODS
-    //----------------------------------------------------------
 }
