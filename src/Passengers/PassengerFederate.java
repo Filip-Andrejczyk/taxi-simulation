@@ -43,6 +43,9 @@ public class PassengerFederate {
     protected ParameterHandle executeRide_time;
     protected ParameterHandle executeRide_destinationId;
 
+    protected InteractionClassHandle publishNumOfAreasHandle;
+    protected ParameterHandle publishNumOfAreas_numOfAreas;
+
     protected ObjectClassHandle passengerHandler;
     protected AttributeHandle passengerHandler_originId;
     protected AttributeHandle passengerHandler_destinationId;
@@ -184,6 +187,7 @@ public class PassengerFederate {
         //subscribe to to executeRide
         subscribeToExecuteRideInteraction();
         //subscribe to PublishNumOfareas() z federata Area
+        subscribeToPublisNumOfAreasInteraction();
 
         // do the publication of passenger object
         publishPassengerObject();
@@ -205,6 +209,11 @@ public class PassengerFederate {
         //passengerInstanceHandle = rtiamb.registerObjectInstance(passengerHandler);???????????
     }
 
+    private void subscribeToPublisNumOfAreasInteraction() throws RTIexception {
+        publishNumOfAreasHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
+        rtiamb.subscribeInteractionClass(publishNumOfAreasHandle);
+        publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");
+    }
 
     private void subscribeToExecuteRideInteraction() throws RTIexception {
         executeRideHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.executeRide");
