@@ -13,11 +13,4 @@ public class Taxi {
         this.taxiFederate = taxiFederate;
     }
 
-    public void ExecuteRide(double time, int destinationId){
-
-    }
-
-    public void joinTaxiQueue(int taxiId){
-
-    }
 }

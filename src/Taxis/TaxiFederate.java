@@ -1,23 +1,10 @@
 package Taxis;
 
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.CallbackModel;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.RTIambassador;
-import hla.rti1516e.ResignAction;
-import hla.rti1516e.RtiFactoryFactory;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -108,21 +95,20 @@ public class TaxiFederate
     protected EncoderFactory encoderFactory;     // set when we join
 
     // caches of handle types - set once we join a federation
-    protected ObjectClassHandle passengerHandle;
-    protected AttributeHandle passengerOriginIdHandle;
-    protected AttributeHandle passengerDirectionIdHandle;
-    protected AttributeHandle passengerPassengerIdHandle;
 
-    protected ObjectClassHandle areaHandle;
-    protected AttributeHandle areaAreaIdHandle;
-    protected AttributeHandle areaRideTimesHandle;
+    protected InteractionClassHandle joinTaxiQueueHandle;
 
     protected ObjectClassHandle taxiHandle;
-    protected AttributeHandle taxiTaxiIdHandle;
-    protected AttributeHandle taxiAreaIdHandle;
+    protected AttributeHandle taxiHandle_taxiId;
+    protected AttributeHandle taxiHandle_areaId;
 
     protected InteractionClassHandle executeRideHandle;
-    protected InteractionClassHandle joinTaxiQueueHandle;
+    protected ParameterHandle executeRide_time;
+    protected ParameterHandle executeRide_destinationId;
+
+    protected InteractionClassHandle publishNumOfAreasHandle;
+    protected ParameterHandle publishNumOfAreas_numOfAreas;
+
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -372,54 +358,39 @@ public class TaxiFederate
         // before we can register instance of the object class Food.Drink.Soda and
         // update the values of the various attributes, we need to tell the RTI
         // that we intend to publish this information
-
-        // get all the handle information for the attributes of Passengers.Passenger
-        this.passengerHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Passengers" );
-        this.passengerDirectionIdHandle = rtiamb.getAttributeHandle( passengerHandle, "directionId" );
-        this.passengerOriginIdHandle = rtiamb.getAttributeHandle( passengerHandle, "originId" );
-        this.passengerPassengerIdHandle = rtiamb.getAttributeHandle( passengerHandle, "passengerId" );
-        // get all the handle information for the attributes of Areas.Area
-        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Areas" );
-        this.areaAreaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
-        this.areaRideTimesHandle = rtiamb.getAttributeHandle( areaHandle, "rideTimes" );
-
-        // get all the handle information for the attributes of Taxis.Taxi
-        this.taxiHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Taxis" );
-        this.taxiTaxiIdHandle = rtiamb.getAttributeHandle( taxiHandle, "taxiId" );
-        this.taxiAreaIdHandle = rtiamb.getAttributeHandle( taxiHandle, "areaId" );
-
-        AttributeHandleSet passengerAttributes = rtiamb.getAttributeHandleSetFactory().create();
-        passengerAttributes.add( passengerDirectionIdHandle );
-        passengerAttributes.add( passengerOriginIdHandle );
-        passengerAttributes.add( passengerPassengerIdHandle );
-        rtiamb.subscribeObjectClassAttributes( passengerHandle, passengerAttributes );
-
-        AttributeHandleSet areaAttributes = rtiamb.getAttributeHandleSetFactory().create();
-        areaAttributes.add( areaAreaIdHandle );
-        areaAttributes.add( areaRideTimesHandle );
-        rtiamb.subscribeObjectClassAttributes( areaHandle, areaAttributes );
-
-        AttributeHandleSet taxiAttributes = rtiamb.getAttributeHandleSetFactory().create();
-        taxiAttributes.add( taxiTaxiIdHandle );
-        taxiAttributes.add( taxiAreaIdHandle );
-        rtiamb.publishObjectClassAttributes(taxiHandle, taxiAttributes);
-        rtiamb.subscribeObjectClassAttributes( taxiHandle, taxiAttributes );
-
-        ///////////////////////////////////////////////////////////////
-        // publish the interaction class executeRide & joinTaxiQueue //
-        ///////////////////////////////////////////////////////////////
-        executeRideHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.executeRide" );
+        publishTaxiObject();
         joinTaxiQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.joinTaxiQueue" );
-
-        // do the publication
-        rtiamb.publishInteractionClass( executeRideHandle );
         rtiamb.publishInteractionClass( joinTaxiQueueHandle );
 
         //////////////////////////////////////////////////////////////
         // subscribe to the executeRide & joinTaxiQueue interaction //
         //////////////////////////////////////////////////////////////
-        rtiamb.subscribeInteractionClass( executeRideHandle );
-        rtiamb.subscribeInteractionClass( joinTaxiQueueHandle );
+        subscribeToExecuteRideInteraction();
+        subscribeToPublisNumOfAreasInteraction();
+    }
+
+    private void publishTaxiObject() throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError, InvalidObjectClassHandle, AttributeNotDefined, ObjectClassNotDefined, SaveInProgress, RestoreInProgress, ObjectClassNotPublished {
+        taxiHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Taxis");
+        taxiHandle_taxiId = rtiamb.getAttributeHandle(taxiHandle, "taxiId");
+        taxiHandle_areaId = rtiamb.getAttributeHandle(taxiHandle, "areaId");
+
+        AttributeHandleSet attributesToPublic = rtiamb.getAttributeHandleSetFactory().create();
+        attributesToPublic.add(taxiHandle_taxiId);
+        attributesToPublic.add(taxiHandle_areaId);
+        rtiamb.publishObjectClassAttributes(taxiHandle, attributesToPublic);
+    }
+
+    private void subscribeToExecuteRideInteraction() throws RTIexception {
+        executeRideHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.executeRide");
+        rtiamb.subscribeInteractionClass(executeRideHandle);
+        executeRide_time = rtiamb.getParameterHandle(executeRideHandle, "time");
+        executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
+    }
+
+    private void subscribeToPublisNumOfAreasInteraction() throws RTIexception {
+        publishNumOfAreasHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
+        rtiamb.subscribeInteractionClass(publishNumOfAreasHandle);
+        publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");
     }
 
     /**
