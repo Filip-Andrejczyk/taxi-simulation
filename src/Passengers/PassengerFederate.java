@@ -26,6 +26,7 @@ public class PassengerFederate {
 
     double nextPassengerTime = -1;
     Random random = new Random();
+    List<Passenger> passengersList;
 
     private RTIambassador rtiamb;
     private PassengerAmbassador fedamb;
@@ -141,11 +142,7 @@ public class PassengerFederate {
         publishAndSubscribe();
         log( "Published and Subscribed" );
 
-        Random rnd = new Random();
-        int randomOrigin = ThreadLocalRandom.current().nextInt(1, 3);
-        int randomDestination = getRandomWithExclusion(rnd, 1, 3, randomOrigin);
 
-        Passenger passenger = new Passenger(randomOrigin, randomDestination);
 
         // TO DOOOOOOOOOO
 
@@ -226,10 +223,13 @@ public class PassengerFederate {
                 int originId = random.nextInt(5); //we have 4 areas
                 int destinationId = random.nextInt(5); //we have 4 areas
                 while (originId == destinationId){
-                    destinationId = random.nextInt(5); //we have 4 areas
+                    destinationId = random.nextInt(5);
                 }
-                Passenger newPassenger = new Passenger();
+                Passenger newPassenger = new Passenger(originId, destinationId, this);
+                passengersList.add(newPassenger);
+                log("czas ["+getSimTime()+"] W strefie ("+originId+") pojawił się klient chcący pojechać do strefy ("+destinationId+")");
             }
+            nextPassengerTime = getSimTime() + random.nextInt(20) + 10;
         }
     }
 
