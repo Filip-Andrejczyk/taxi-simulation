@@ -24,7 +24,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PassengerFederate {
     public static final String READY_TO_RUN = "ReadyToRun";
 
-    int[] areaIds = new int[]{1, 2, 3};
+    double nextPassengerTime = -1;
+    Random random = new Random();
 
     private RTIambassador rtiamb;
     private PassengerAmbassador fedamb;
@@ -190,7 +191,6 @@ public class PassengerFederate {
         // do the publication of passenger object
         publishPassengerObject();
 
-
     }
 
     private void publishPassengerObject() throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError, InvalidObjectClassHandle, AttributeNotDefined, ObjectClassNotDefined, SaveInProgress, RestoreInProgress, ObjectClassNotPublished {
@@ -216,6 +216,23 @@ public class PassengerFederate {
         attributes.add( areaIdHandle );
         attributes.add( areaRideTimesHandle );
         rtiamb.subscribeObjectClassAttributes(areaHandle, attributes);
+    }
+
+    private void handlePassengerSpawn() throws RTIexception {
+        if(getSimTime() >= nextPassengerTime) {
+            int numberOfPassengersToSpawn = random.nextInt(3) + 1;
+
+            for (int i = 0; i < numberOfPassengersToSpawn; i++){
+                int originId = random.nextInt(5); //we have 4 areas
+                int destinationId = getRandomWithExclusion(random, 1, 4,  originId);
+                Passenger newPassenger = new Passenger();
+            }
+        }
+    }
+
+
+    protected double getSimTime() {
+        return fedamb.federateTime;
     }
 
     private void enableTimePolicy() throws Exception
