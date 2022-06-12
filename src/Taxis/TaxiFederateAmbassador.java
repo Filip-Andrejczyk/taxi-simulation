@@ -199,31 +199,17 @@ public class TaxiFederateAmbassador extends NullFederateAmbassador
             // print the attibute handle
             builder.append( "\tattributeHandle=" );
 
-            if( attributeHandle.equals(federate.passengerDirectionIdHandle) )
+            if( attributeHandle.equals(federate.taxiHandle_areaId) )
             {
                 builder.append( attributeHandle );
-                builder.append( "(DirectionId)" );
+                builder.append( "(areaId)" );
                 builder.append( ", attributeValue=" );
                 builder.append( decodeInt(theAttributes.get(attributeHandle)) );
             }
-            else if( attributeHandle.equals(federate.passengerOriginIdHandle) )
+            else if( attributeHandle.equals(federate.taxiHandle_taxiId) )
             {
                 builder.append( attributeHandle );
-                builder.append( "(OriginId)" );
-                builder.append( ", attributeValue=" );
-                builder.append( decodeInt(theAttributes.get(attributeHandle)) );
-            }
-            else if( attributeHandle.equals(federate.passengerPassengerIdHandle) )
-            {
-                builder.append( attributeHandle );
-                builder.append( "(PassengerId)" );
-                builder.append( ", attributeValue=" );
-                builder.append( decodeInt(theAttributes.get(attributeHandle)) );
-            }
-            else if( attributeHandle.equals(federate.areaAreaIdHandle) )
-            {
-                builder.append( attributeHandle );
-                builder.append( "(AreaId)" );
+                builder.append( "(taxiId)" );
                 builder.append( ", attributeValue=" );
                 builder.append( decodeInt(theAttributes.get(attributeHandle)) );
             }

@@ -1,7 +1,6 @@
 package Taxis;
 
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
@@ -9,7 +8,6 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
-import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -95,17 +93,16 @@ public class TaxiFederate
     private TaxiFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
-    private List<Taxi> taxisList;
 
     // caches of handle types - set once we join a federation
-
-    protected InteractionClassHandle joinTaxiQueueHandle;
-    protected AttributeHandle joinTaxiQueueHandle_taxiId;
-    protected AttributeHandle joinTaxiQueueHandle_areaId;
 
     protected ObjectClassHandle taxiHandle;
     protected AttributeHandle taxiHandle_taxiId;
     protected AttributeHandle taxiHandle_areaId;
+
+    protected InteractionClassHandle joinTaxiQueueHandle;
+    protected ParameterHandle joinTaxiQueue_areaId;
+    protected ParameterHandle joinTaxiQueue_taxiId;
 
     protected InteractionClassHandle executeRideHandle;
     protected ParameterHandle executeRide_time;
@@ -372,19 +369,6 @@ public class TaxiFederate
         //////////////////////////////////////////////////////////////
         subscribeToExecuteRideInteraction();
         subscribeToPublisNumOfAreasInteraction();
-    }
-
-    public void handleInteractionJoinToTaxiQueue(ParameterHandleValueMap params) throws DecoderException {
-        HLAinteger32BE tmp = new HLA1516eInteger32BE();
-        tmp.decode(params.get(joinTaxiQueueHandle_taxiId));
-        int taxiId = tmp.getValue();
-
-        tmp.decode(params.get(joinTaxiQueueHandle_areaId));
-        int areaId = tmp.getValue();
-
-        Taxi taxi = taxisList.stream().filter(x -> x.taxiId == taxiId).findFirst().get();
-
-
     }
 
     private void publishTaxiObject() throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError, InvalidObjectClassHandle, AttributeNotDefined, ObjectClassNotDefined, SaveInProgress, RestoreInProgress, ObjectClassNotPublished {
