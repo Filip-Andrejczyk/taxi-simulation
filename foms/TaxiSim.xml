@@ -85,6 +85,10 @@
                     <name>passengerId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
+                <parameter>
+                    <name>areaId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                </parameter>
                 <order>TimeStamp</order>
             </interactionClass>
             <interactionClass>
@@ -97,6 +101,10 @@
                     <name>destinationId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
+                <parameter>
+                    <name>passengerId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                </parameter>
                 <order>TimeStamp</order>
             </interactionClass>
             <interactionClass>
@@ -105,16 +113,16 @@
                     <name>taxiId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
+                <parameter>
+                    <name>areaId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                </parameter>
                 <order>TimeStamp</order>
             </interactionClass>
             <interactionClass>
-                <name>getRideTime</name>
+                <name>leaveTaxi</name>
                 <parameter>
-                    <name>originId</name>
-                    <dataType>HLAinteger32BE</dataType>
-                </parameter>
-                <parameter>
-                    <name>destinationId</name>
+                    <name>passengerId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
                 <order>TimeStamp</order>
