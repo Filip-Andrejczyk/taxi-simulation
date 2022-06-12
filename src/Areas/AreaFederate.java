@@ -1,5 +1,7 @@
 package Areas;
 
+import Passengers.Passenger;
+import Taxis.Taxi;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
@@ -11,11 +13,15 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import javafx.util.Pair;
+import org.jgroups.util.Triple;
+import org.jgroups.util.Tuple;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.io.PushbackInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -28,7 +34,14 @@ public class AreaFederate {
     private AreaAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
+
     private List<Area> areasList;
+
+    private List<Tuple<Integer, Integer>> taxisList;
+    private List<Triple<Integer, Integer, Integer>> passengersList;
+
+    public ObjectInstanceHandle taxiInstanceHandle;
+    public ObjectInstanceHandle passengerInstanceHandle;
 
     protected ObjectClassHandle areaHandle;
     protected AttributeHandle areaIdHandle;
@@ -220,6 +233,59 @@ public class AreaFederate {
     protected double getSimTime() {
         return fedamb.federateTime;
     }
+
+    public void updatePassengerValues(int passengerId, int originId, int destinationId) throws RTIexception {
+        for (int i = 0; i < passengersList.size(); i++){
+            if (passengersList.get(i).getVal1() == passengerId){
+                passengersList.get(i).setVal2(originId);
+                passengersList.get(i).setVal3(destinationId);
+                return;
+            }
+        }
+        passengersList.add(new Triple<>(passengerId, originId, destinationId));
+    }
+
+    public void updateTaxiValues(int taxiId, int areaId) throws RTIexception {
+        for (int i = 0; i < taxisList.size(); i++){
+            if (taxisList.get(i).getVal1() == taxiId) {
+                taxisList.get(i).setVal2(areaId);
+                return;
+            }
+        }
+        taxisList.add(new Tuple<>(taxiId, areaId));
+    }
+
+//    public void updatePassengerValues(int passengerId, int originId, int destinationId) throws RTIexception{
+//
+//        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(3);
+//
+//        HLAinteger32BE _passengerId = encoderFactory.createHLAinteger32BE(passengerId);
+//        attributes.put(passengerHandle_passengerId, _passengerId.toByteArray());
+//
+//        HLAinteger32BE _originId = encoderFactory.createHLAinteger32BE(originId);
+//        attributes.put(passengerHandle_originId, _originId.toByteArray());
+//
+//        HLAinteger32BE _destinationId = encoderFactory.createHLAinteger32BE(destinationId);
+//        attributes.put(passengerHandle_directionId, _destinationId.toByteArray());
+//
+//        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime+ fedamb.federateLookahead);
+//        rtiamb.updateAttributeValues(passengerInstanceHandle, attributes, generateTag(), time);
+//
+//    }
+//
+//    public void updateTaxisValues(int taxiId, int originId) throws RTIexception{
+//        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+//
+//        HLAinteger32BE _taxiId = encoderFactory.createHLAinteger32BE(taxiId);
+//        attributes.put(taxiHandle_areaId, _taxiId.toByteArray());
+//
+//        HLAinteger32BE _originId = encoderFactory.createHLAinteger32BE(originId);
+//        attributes.put(taxiHandle_areaId, _originId.toByteArray());
+//
+//        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime+ fedamb.federateLookahead);
+//        rtiamb.updateAttributeValues(taxiInstanceHandle, attributes, generateTag(), time);
+//
+//    }
 
     private byte[] generateTag()
     {
