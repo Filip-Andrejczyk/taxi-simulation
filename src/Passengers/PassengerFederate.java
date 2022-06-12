@@ -3,8 +3,7 @@ package Passengers;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -37,8 +36,14 @@ public class PassengerFederate {
     protected ObjectClassHandle areaHandle;
     protected AttributeHandle areaIdHandle;
     protected AttributeHandle areaRideTimesHandle;
+
     protected InteractionClassHandle joinPassengerQueueHandle;
     protected InteractionClassHandle executeRideHandle;
+
+    protected ObjectClassHandle passengerHandler;
+    protected AttributeHandle passengerHandler_originId;
+    protected AttributeHandle passengerHandler_destinationId;
+    protected AttributeHandle passengerHandler_passengerId;
 
     protected int areaID = 0;
     protected int areaRideRIMES = 0;
@@ -176,31 +181,41 @@ public class PassengerFederate {
 
     private void publishAndSubscribe() throws RTIexception
     {
-        // subscribe for Area
-        this.areaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Areas" );
+		//publish GetProducts interaction
+        joinPassengerQueueHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.joinPassengerQueue");
+        rtiamb.publishInteractionClass(joinPassengerQueueHandle);
+
+        //subscribe to area
+        subscribeToArea();
+        // do the publication of passenger object
+        publishPassengerObject();
+
+
+    }
+
+    private void publishPassengerObject() throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError, InvalidObjectClassHandle, AttributeNotDefined, ObjectClassNotDefined, SaveInProgress, RestoreInProgress, ObjectClassNotPublished {
+        passengerHandler = rtiamb.getObjectClassHandle("HLAobjectRoot.Passengers");
+        passengerHandler_passengerId = rtiamb.getAttributeHandle(passengerHandler, "passengerId");
+        passengerHandler_originId = rtiamb.getAttributeHandle(passengerHandler, "originId");
+        passengerHandler_destinationId = rtiamb.getAttributeHandle(passengerHandler, "directionId");
+
+        AttributeHandleSet attributesToPublic = rtiamb.getAttributeHandleSetFactory().create();
+        attributesToPublic.add(passengerHandler_originId);
+        attributesToPublic.add(passengerHandler_passengerId);
+        attributesToPublic.add(passengerHandler_destinationId);
+
+        rtiamb.publishObjectClassAttributes(passengerHandler, attributesToPublic);
+        //passengerInstanceHandle = rtiamb.registerObjectInstance(passengerHandler);???????????
+    }
+
+    private void subscribeToArea() throws RTIexception {
+        areaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Areas");
         this.areaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
         this.areaRideTimesHandle = rtiamb.getAttributeHandle( areaHandle, "rideTimes" );
-
-        //subscribe for ExecuteRidew interaction
-        String iname = "HLAinteractionRoot.executeRide";
-        executeRideHandle = rtiamb.getInteractionClassHandle(iname);
-        rtiamb.subscribeInteractionClass(executeRideHandle);
-
-
-//		// package the information into a handle set
         AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
         attributes.add( areaIdHandle );
         attributes.add( areaRideTimesHandle );
         rtiamb.subscribeObjectClassAttributes(areaHandle, attributes);
-
-
-//		publish GetProducts interaction
-        iname = "HLAinteractionRoot.joinPassengerQueue";
-        joinPassengerQueueHandle = rtiamb.getInteractionClassHandle( iname );
-        // do the publication
-        rtiamb.publishInteractionClass(joinPassengerQueueHandle);
-
-
     }
 
     private void enableTimePolicy() throws Exception
