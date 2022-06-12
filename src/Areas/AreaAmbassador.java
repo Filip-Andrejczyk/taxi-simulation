@@ -87,6 +87,12 @@ public class AreaAmbassador extends NullFederateAmbassador {
                                         String objectName )
             throws FederateInternalError
     {
+        if (theObjectClass.equals(federate.taxiHandle)){
+            federate.taxiInstanceHandle = theObject;
+        }
+        if (theObjectClass.equals(federate.passengerHandle)){
+            federate.passengerInstanceHandle = theObject;
+        }
         log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
                 theObjectClass + ", name=" + objectName );
     }
@@ -113,43 +119,79 @@ public class AreaAmbassador extends NullFederateAmbassador {
                 reflectInfo );
     }
 
+//    @Override
+//    public void reflectAttributeValues( ObjectInstanceHandle theObject,
+//                                        AttributeHandleValueMap theAttributes,
+//                                        byte[] tag,
+//                                        OrderType sentOrdering,
+//                                        TransportationTypeHandle theTransport,
+//                                        LogicalTime time,
+//                                        OrderType receivedOrdering,
+//                                        SupplementalReflectInfo reflectInfo )
+//            throws FederateInternalError
+//    {
+//        StringBuilder builder = new StringBuilder( "Reflection for object:" );
+//
+//        // print the handle
+//        builder.append( " handle=" + theObject );
+//        // print the tag
+//        builder.append( ", tag=" + new String(tag) );
+//        // print the time (if we have it) we'll get null if we are just receiving
+//        // a forwarded call from the other reflect callback above
+//
+//
+//        // print the attribute information
+//        builder.append( ", attributeCount=" + theAttributes.size() );
+//        builder.append( "\n" );
+//        for( AttributeHandle attributeHandle : theAttributes.keySet() )
+//        {
+//            // print the attibute handle
+//            builder.append( "\tattributeHandle=" );
+//
+//            // if we're dealing with Flavor, decode into the appropriate enum value
+//
+//            builder.append( "\n" );
+//        }
+//
+//        log( builder.toString() );
+//    }
+
     @Override
-    public void reflectAttributeValues( ObjectInstanceHandle theObject,
-                                        AttributeHandleValueMap theAttributes,
-                                        byte[] tag,
-                                        OrderType sentOrdering,
-                                        TransportationTypeHandle theTransport,
-                                        LogicalTime time,
-                                        OrderType receivedOrdering,
-                                        SupplementalReflectInfo reflectInfo )
-            throws FederateInternalError
-    {
-        StringBuilder builder = new StringBuilder( "Reflection for object:" );
+    public void reflectAttributeValues(ObjectInstanceHandle theObject,
+                                       AttributeHandleValueMap theAttributes,
+                                       byte[] tag,
+                                       OrderType sentOrdering,
+                                       TransportationTypeHandle theTransport,
+                                       LogicalTime time,
+                                       OrderType receivedOrdering,
+                                       SupplementalReflectInfo reflectInfo) throws FederateInternalError {
+        try {
+            if(theObject.equals(federate.taxiInstanceHandle)) {
+                HLAinteger32BE taxiId = new HLA1516eInteger32BE();
+                taxiId.decode(theAttributes.get(federate.taxiHandle_taxiId));
 
-        // print the handle
-        builder.append( " handle=" + theObject );
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
+                HLAinteger32BE taxiAreaId = new HLA1516eInteger32BE();
+                taxiAreaId.decode(theAttributes.get(federate.taxiHandle_areaId));
 
+                federate.updateTaxiValues(taxiId.getValue(), taxiAreaId.getValue());
+            }
+            if(theObject.equals(federate.passengerInstanceHandle)) {
+                HLAinteger32BE passengerId = new HLA1516eInteger32BE();
+                passengerId.decode(theAttributes.get(federate.passengerHandle_passengerId));
 
-        // print the attribute information
-        builder.append( ", attributeCount=" + theAttributes.size() );
-        builder.append( "\n" );
-        for( AttributeHandle attributeHandle : theAttributes.keySet() )
-        {
-            // print the attibute handle
-            builder.append( "\tattributeHandle=" );
+                HLAinteger32BE passengerOrigin = new HLA1516eInteger32BE();
+                passengerOrigin.decode(theAttributes.get(federate.passengerHandle_originId));
 
-            // if we're dealing with Flavor, decode into the appropriate enum value
+                HLAinteger32BE passengerDestination = new HLA1516eInteger32BE();
+                passengerDestination.decode(theAttributes.get(federate.passengerHandle_directionId));
 
-            builder.append( "\n" );
+                federate.updatePassengerValues(passengerId.getValue(), passengerOrigin.getValue(), passengerDestination.getValue());
+            }
         }
-
-        log( builder.toString() );
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-
 
     @Override
     public void receiveInteraction( InteractionClassHandle interactionClass,
