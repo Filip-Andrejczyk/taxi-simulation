@@ -37,6 +37,13 @@ public class AreaFederate {
 
     private List<Area> areasList;
 
+    double[][] rideTimes = {
+            {0.0, 15.12, 27.67, 43.12},
+            {15.12, 0.0, 23.99, 32.11},
+            {27.67, 23.99, 0.0, 60.22},
+            {43.12, 32.11, 60.22, 0.0}
+    };
+
     private List<Tuple<Integer, Integer>> taxisList;
     private List<Triple<Integer, Integer, Integer>> passengersList;
 
