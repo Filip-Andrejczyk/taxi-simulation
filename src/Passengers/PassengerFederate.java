@@ -224,7 +224,10 @@ public class PassengerFederate {
 
             for (int i = 0; i < numberOfPassengersToSpawn; i++){
                 int originId = random.nextInt(5); //we have 4 areas
-                int destinationId = getRandomWithExclusion(random, 1, 4,  originId);
+                int destinationId = random.nextInt(5); //we have 4 areas
+                while (originId == destinationId){
+                    destinationId = random.nextInt(5); //we have 4 areas
+                }
                 Passenger newPassenger = new Passenger();
             }
         }
