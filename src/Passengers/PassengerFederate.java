@@ -35,20 +35,18 @@ public class PassengerFederate {
     //    public List<Integer> areaIds = new ArrayList<>(Arrays.asList({1, 2, 3, 4, 5}));
 
     //handle types
-    protected ObjectClassHandle areaHandle;
-    protected AttributeHandle areaIdHandle;
-    protected AttributeHandle areaRideTimesHandle;
 
     protected InteractionClassHandle joinPassengerQueueHandle;
+    protected ParameterHandle joinPassengerQueue_passengerId;
+
     protected InteractionClassHandle executeRideHandle;
+    protected ParameterHandle executeRide_time;
+    protected ParameterHandle executeRide_destinationId;
 
     protected ObjectClassHandle passengerHandler;
     protected AttributeHandle passengerHandler_originId;
     protected AttributeHandle passengerHandler_destinationId;
     protected AttributeHandle passengerHandler_passengerId;
-
-    protected int areaID = 0;
-    protected int areaRideRIMES = 0;
 
 
     private void log( String message )
@@ -183,8 +181,10 @@ public class PassengerFederate {
         joinPassengerQueueHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.joinPassengerQueue");
         rtiamb.publishInteractionClass(joinPassengerQueueHandle);
 
-        //subscribe to area
-        subscribeToArea();
+        //subscribe to to executeRide
+        subscribeToExecuteRideInteraction();
+        //subscribe to PublishNumOfareas() z federata Area
+
         // do the publication of passenger object
         publishPassengerObject();
 
@@ -205,15 +205,14 @@ public class PassengerFederate {
         //passengerInstanceHandle = rtiamb.registerObjectInstance(passengerHandler);???????????
     }
 
-    private void subscribeToArea() throws RTIexception {
-        areaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Areas");
-        this.areaIdHandle = rtiamb.getAttributeHandle( areaHandle, "areaId" );
-        this.areaRideTimesHandle = rtiamb.getAttributeHandle( areaHandle, "rideTimes" );
-        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-        attributes.add( areaIdHandle );
-        attributes.add( areaRideTimesHandle );
-        rtiamb.subscribeObjectClassAttributes(areaHandle, attributes);
+
+    private void subscribeToExecuteRideInteraction() throws RTIexception {
+        executeRideHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.executeRide");
+        rtiamb.subscribeInteractionClass(executeRideHandle);
+        executeRide_time = rtiamb.getParameterHandle(executeRideHandle, "time");
+        executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
     }
+
 
     private void handlePassengerSpawn() throws RTIexception {
         if(getSimTime() >= nextPassengerTime) {
