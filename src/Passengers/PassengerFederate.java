@@ -31,7 +31,6 @@ public class PassengerFederate {
     protected EncoderFactory encoderFactory;
 
     //handle types
-
     protected InteractionClassHandle executeRideHandle;
     protected ParameterHandle executeRide_destinationId;
     protected ParameterHandle executeRide_passengerId;
@@ -177,12 +176,10 @@ public class PassengerFederate {
 
     private void publishAndSubscribe() throws RTIexception
     {
-
         //subscribe to to executeRide
         subscribeToExecuteRideInteraction();
         //subscribe to PublishNumOfareas() z federata Area
         subscribeToPublishNumOfAreasInteraction();
-
         // do the publication of passenger object
         publishPassengerObject();
 

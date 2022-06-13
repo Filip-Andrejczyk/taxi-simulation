@@ -40,8 +40,8 @@ public class AreaFederate {
             {43.12, 32.11, 60.22, 0.0}
     };
 
-    private List<Tuple<Integer, Integer>> taxisList;
-    private List<Triple<Integer, Integer, Integer>> passengersList;
+    private List<Tuple<Integer, Integer>> taxisList; //id, currentAreaId
+    private List<Triple<Integer, Integer, Integer>> passengersList; //id, originID, destinationID
 
     public ObjectInstanceHandle taxiInstanceHandle;
     public ObjectInstanceHandle passengerInstanceHandle;
@@ -162,11 +162,11 @@ public class AreaFederate {
 
     private void subscribeToTaxiObject() throws RTIexception {
         taxiHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Taxis");
-        taxiHandle_taxiId = rtiamb.getAttributeHandle(taxiHandle, "taxiId");
         taxiHandle_areaId = rtiamb.getAttributeHandle(taxiHandle, "areaId");
+        taxiHandle_taxiId = rtiamb.getAttributeHandle(taxiHandle, "taxiId");
         AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-        attributes.add(taxiHandle_taxiId);
         attributes.add(taxiHandle_areaId);
+        attributes.add(taxiHandle_taxiId);
         rtiamb.subscribeObjectClassAttributes(taxiHandle, attributes);
     }
 
@@ -410,22 +410,7 @@ public class AreaFederate {
 
 
 //        TO DOOOOOOOOOOOOO
-        while( fedamb.isRunning )
-        {
-//            // update ProductsStorage parameters max and available to current values
-//            AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
-//
-//            HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE( Storage.getInstance().getMax());
-//            attributes.put( storageMaxHandle, maxValue.toByteArray() );
-//
-//            HLAinteger32BE availableValue = encoderFactory.createHLAinteger32BE( Storage.getInstance().getAvailable() );
-//            attributes.put( storageAvailableHandle, availableValue.toByteArray() );
-//
-//            rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
-
-            advanceTime(1);
-            log( "Time Advanced to " + fedamb.federateTime );
-        }
+        simulationLoop();
 
         //////////////////////////////////////
         // 11. delete the object we created //
@@ -456,6 +441,25 @@ public class AreaFederate {
         catch( FederatesCurrentlyJoined fcj )
         {
             log( "Didn't destroy federation, federates still joined" );
+        }
+    }
+
+    private void simulationLoop() throws RTIexception {
+        while( fedamb.isRunning )
+        {
+//            // update ProductsStorage parameters max and available to current values
+//            AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+//
+//            HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE( Storage.getInstance().getMax());
+//            attributes.put( storageMaxHandle, maxValue.toByteArray() );
+//
+//            HLAinteger32BE availableValue = encoderFactory.createHLAinteger32BE( Storage.getInstance().getAvailable() );
+//            attributes.put( storageAvailableHandle, availableValue.toByteArray() );
+//
+//            rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
+
+            advanceTime(1);
+            log( "Time Advanced to " + fedamb.federateTime );
         }
     }
 
