@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * This is an example federate demonstrating how to properly use the IEEE 1516-2010 (HLA Evolved)
@@ -84,6 +85,8 @@ public class TaxiFederate
 
     /** The sync point all federates will sync up on before starting */
     public static final String READY_TO_RUN = "ReadyToRun";
+    public double nextTaxiTime = -1;
+    Random random = new Random();
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -438,6 +441,31 @@ public class TaxiFederate
         rtiamb.updateAttributeValues( taxiInstanceHandle, attributes, generateTag(), time );
     }
 
+    public void simulationLoop() throws RTIexception {
+        while (fedamb.isRunning) {
+            //spawnuj taxuwy
+            handleTaxiSpawn();
+        }
+    }
+
+    private void handleTaxiSpawn() throws RTIexception {
+        if (getSimTime() >= nextTaxiTime){
+            int numberOfTaxisToSpawn = random.nextInt(3) + 1;
+            //TODO parametryzacja rozkładu generowania taksówek
+
+            for (int i = 0; i < numberOfTaxisToSpawn; i++){
+                int areaId = random.nextInt(numOfAreas);
+                Taxi newTaxi = new Taxi(areaId, this);
+                taxis.add(newTaxi);
+                log("czas ["+getSimTime()+"] W strefie ("+areaId+") pojawiła się taxi o id ["+newTaxi.taxiId+"]");
+            }
+            nextTaxiTime = getSimTime() + random.nextInt(20) + 10;
+        }
+    }
+
+    protected double getSimTime() {
+        return fedamb.federateTime;
+    }
 
     /**
      * This method will request a time advance to the current time, plus the given

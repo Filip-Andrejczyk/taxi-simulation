@@ -198,7 +198,7 @@ public class PassengerFederate {
             //TODO PARAMETRYZACJA ROZKłADU GENEROWANIA PASAŻERÓW
 
             for (int i = 0; i < numberOfPassengersToSpawn; i++){
-                int originId = random.nextInt(numOfAreas );
+                int originId = random.nextInt(numOfAreas);
                 int destinationId = random.nextInt(numOfAreas);
                 while (originId == destinationId){
                     destinationId = random.nextInt(numOfAreas);
