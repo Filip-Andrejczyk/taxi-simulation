@@ -1,13 +1,11 @@
 package Areas;
 
+import Passengers.Passenger;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -139,13 +137,13 @@ public class AreaFederate {
         rtiamb.publishInteractionClass(publishNumOfAreas);
 
         //sub for joinTaxiqueue:
-        subscribeToJoinTaxiQueueInteraction();
+//        subscribeToJoinTaxiQueueInteraction();
         //sub for joinPassengerQueue:
-        subscribeToJoinPassengerQueueInteraction();
+        // subscribeToJoinPassengerQueueInteraction();
 
         //sub for passenger and taxi objects
+        //subscribeToTaxiObject();
         subscribeToPassengerObject();
-        subscribeToTaxiObject();
     }
 
     private void subscribeToPassengerObject() throws RTIexception {
@@ -398,8 +396,8 @@ public class AreaFederate {
         /////////////////////////////////////
         // 9. register an object to update //
         /////////////////////////////////////
-        ObjectInstanceHandle objectHandle = rtiamb.registerObjectInstance( areaHandle );
-        log( "Registered Area, handle=" + objectHandle );
+        // ObjectInstanceHandle objectHandle = rtiamb.registerObjectInstance( areaHandle );
+        // log( "Registered Area, handle=" + objectHandle );
 
         /////////////////////////////////////
         // 10. do the main simulation loop //
@@ -447,21 +445,61 @@ public class AreaFederate {
     private void simulationLoop() throws RTIexception {
         while( fedamb.isRunning )
         {
-//            // update ProductsStorage parameters max and available to current values
-//            AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
-//
-//            HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE( Storage.getInstance().getMax());
-//            attributes.put( storageMaxHandle, maxValue.toByteArray() );
-//
-//            HLAinteger32BE availableValue = encoderFactory.createHLAinteger32BE( Storage.getInstance().getAvailable() );
-//            attributes.put( storageAvailableHandle, availableValue.toByteArray() );
-//
-//            rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
+            //handle publishNumbOfAreas
+            int numbOfAreas = areasList.size();
+            handlePublishNumbOfAreas(numbOfAreas);
 
+            for (int i = 0; i < areasList.size(); i++) {
+                if (areasList.get(i).passengerQueue.size() > 0) {
+                    int passengerToRide = areasList.get(i).passengerQueue.pop();
+                    if (areasList.get(i).taxiQueue.size() > 0) {
+                        //jest taxuwa i jest pasazer
+                        int passengerDestinationId = passengersList.stream().filter(x -> x.getVal1() == passengerToRide).findFirst().get().getVal3();
+                        int taxiToGetPassenger = areasList.get(i).taxiQueue.pop();
+
+                        handleExecuteRideInteraction(i, passengerToRide, passengerDestinationId, taxiToGetPassenger);
+                    }
+                    log("czas ["+getSimTime()+"] W strefie ("+i+") pasażer o id ("+passengerToRide+")"+" oczekuje na przyjazd taksówki");
+
+                }
+                log("czas ["+getSimTime()+"] W strefie ("+i+") nie ma ani pasażerów ani taksówek.");
+            }
             advanceTime(1);
             log( "Time Advanced to " + fedamb.federateTime );
         }
     }
+
+    private void handlePublishNumbOfAreas(int numbOfAreas) throws FederateNotExecutionMember, NotConnected, NameNotFound, InvalidInteractionClassHandle, RTIinternalError, InvalidLogicalTime, InteractionClassNotPublished, InteractionParameterNotDefined, InteractionClassNotDefined, SaveInProgress, RestoreInProgress {
+        ParameterHandleValueMap params = rtiamb.getParameterHandleValueMapFactory().create(1);
+        params.put(
+                rtiamb.getParameterHandle(publishNumOfAreas, "numOfAreas"),
+                encoderFactory.createHLAinteger32BE(numbOfAreas).toByteArray()
+        );
+        HLAfloat64Time ttime = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead);
+        rtiamb.sendInteraction(publishNumOfAreas, params, generateTag(), ttime);
+    }
+
+
+    private void handleExecuteRideInteraction(int areaId, int passengerToRide, int passengerDestinationId, int taxiToGetPassenger) throws FederateNotExecutionMember, NotConnected, NameNotFound, InvalidInteractionClassHandle, RTIinternalError, InvalidLogicalTime, InteractionClassNotPublished, InteractionParameterNotDefined, InteractionClassNotDefined, SaveInProgress, RestoreInProgress {
+        ParameterHandleValueMap params = rtiamb.getParameterHandleValueMapFactory().create(3);
+        params.put(
+                rtiamb.getParameterHandle(executeRide, "passengerId"),
+                encoderFactory.createHLAinteger32BE(passengerToRide).toByteArray()
+        );
+        params.put(
+                rtiamb.getParameterHandle(executeRide, "taxiId"),
+                encoderFactory.createHLAinteger32BE(taxiToGetPassenger).toByteArray()
+        );
+        params.put(
+                rtiamb.getParameterHandle(executeRide, "destinationId"),
+                encoderFactory.createHLAinteger32BE(passengerDestinationId).toByteArray()
+        );
+        log("czas ["+getSimTime()+"] W strefie ("+ areaId +") pasażer o id ("+ passengerToRide +")"+" wsiadł do taksówki ["+ taxiToGetPassenger +"] i pojechał do strefy + ["+ passengerDestinationId +"]");
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead);
+        rtiamb.sendInteraction(executeRide, params, generateTag(), time);
+    }
+
 
     public static void main( String[] args )
     {
