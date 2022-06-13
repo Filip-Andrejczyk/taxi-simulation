@@ -140,38 +140,15 @@ public class PassengerFederate {
         log( "Published and Subscribed" );
 
 
-
-        // TO DOOOOOOOOOO
-
-//        while (fedamb.isRunning){
-//            int consumed = consumer.consume();
-//            if(storageAvailable - consumed >= 0 ) {
-//                ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
-//                ParameterHandle addProductsCountHandle = rtiamb.getParameterHandle(getProductsHandle, "count");
-//                HLAinteger32BE count = encoderFactory.createHLAinteger32BE(consumed);
-//                parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
-//                rtiamb.sendInteraction(getProductsHandle, parameterHandleValueMap, generateTag());
-//            }
-//            else
-//            {
-//                log("Consuming canceled because of lack of products.");
-//            }
-//            // 9.3 request a time advance and wait until we get it
-//            advanceTime(consumer.getTimeToNext());
-//            log( "Time Advanced to " + fedamb.federateTime );
-//        }
+        simulationLoop();
 
     }
 
-    public int getRandomWithExclusion(Random rnd, int start, int end, int... exclude) {
-        int random = start + rnd.nextInt(end - start + 1 - exclude.length);
-        for (int ex : exclude) {
-            if (random < ex) {
-                break;
-            }
-            random++;
+    public void simulationLoop() throws RTIexception {
+        while (fedamb.isRunning){
+            //dołączać do kolejki pasażerów
+            handlePassengerSpawn();
         }
-        return random;
     }
 
     private void publishAndSubscribe() throws RTIexception
