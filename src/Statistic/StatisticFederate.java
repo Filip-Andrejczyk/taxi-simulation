@@ -231,12 +231,6 @@ public class StatisticFederate{
             advanceTime(1);
 //            logwithTime( "Time Advanced to " + fedamb.federateTime );
         }
-        Diagram d = new Diagram(Diagram.DiagramType.TIME, "Długości kolejek pasażerów w czasie");
-        Color[] lista = {Color.GREEN, Color.BLUE, Color.RED, Color.MAGENTA};
-        for(Tuple<Integer, MonitoredVar> area : areaLengths){
-            d.add(area.getVal2(), lista[area.getVal1()%4], "Długość kolejki pasażerów obszaru " + area.getVal1());
-        }
-        d.show();
 
         rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
         log( "Resigned from Federation" );
@@ -254,6 +248,12 @@ public class StatisticFederate{
         {
             log( "Didn't destroy federation, federates still joined" );
         }
+        Diagram d = new Diagram(Diagram.DiagramType.TIME, "Długości kolejek pasażerów w czasie");
+        Color[] lista = {Color.GREEN, Color.BLUE, Color.RED, Color.MAGENTA};
+        for(Tuple<Integer, MonitoredVar> area : areaLengths){
+            d.add(area.getVal2(), lista[area.getVal1()%4], "Długość kolejki pasażerów obszaru " + area.getVal1());
+        }
+        d.show();
     }
 
     protected double getSimTime() {

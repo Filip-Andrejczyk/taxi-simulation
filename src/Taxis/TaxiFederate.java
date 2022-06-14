@@ -113,7 +113,7 @@ public class TaxiFederate
     protected ParameterHandle publishNumOfAreas_numOfAreas;
 
     private int numOfAreas = 4;
-    private int numOfTaxis = 16;
+    private int numOfTaxis = SimPar.taxiNum;
 
     private ArrayList<Taxi> taxis = new ArrayList<Taxi>();
 
