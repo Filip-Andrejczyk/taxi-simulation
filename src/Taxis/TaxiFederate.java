@@ -432,10 +432,10 @@ public class TaxiFederate
     {
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-        HLAinteger32BE _taxiId = encoderFactory.createHLAinteger32BE(taxiId);
         HLAinteger32BE _areaId = encoderFactory.createHLAinteger32BE(areaId);
+        HLAinteger32BE _taxiId = encoderFactory.createHLAinteger32BE(taxiId);
+        attributes.put( taxiHandle_areaId, _areaId.toByteArray() );
         attributes.put( taxiHandle_taxiId, _taxiId.toByteArray() );
-        attributes.put( taxiHandle_taxiId, _areaId.toByteArray() );
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( taxiInstanceHandle, attributes, generateTag(), time );

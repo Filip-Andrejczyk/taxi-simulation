@@ -1,9 +1,6 @@
 package Areas;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 
 
 public class Area {
@@ -13,6 +10,8 @@ public class Area {
     public LinkedList<Integer> taxiQueue;
 
     public Area(int areaId){
+        passengerQueue = new LinkedList<>();
+        taxiQueue = new LinkedList<>();
         this.areaId = areaId;
     }
 

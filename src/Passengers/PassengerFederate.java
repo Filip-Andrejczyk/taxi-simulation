@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -196,7 +197,7 @@ public class PassengerFederate {
         if(getSimTime() >= nextPassengerTime) {
             int numberOfPassengersToSpawn = random.nextInt(3) + 1;
             //TODO PARAMETRYZACJA ROZKłADU GENEROWANIA PASAŻERÓW
-
+            passengersList = new ArrayList<>();
             for (int i = 0; i < numberOfPassengersToSpawn; i++){
                 int originId = random.nextInt(numOfAreas);
                 int destinationId = random.nextInt(numOfAreas);
@@ -209,6 +210,8 @@ public class PassengerFederate {
             }
             nextPassengerTime = getSimTime() + random.nextInt(20) + 10;
         }
+        advanceTime(1);
+        log( "Time Advanced to " + fedamb.federateTime );
     }
 
     public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException {

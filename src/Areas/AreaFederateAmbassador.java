@@ -166,11 +166,13 @@ public class AreaFederateAmbassador extends NullFederateAmbassador {
                                        SupplementalReflectInfo reflectInfo) throws FederateInternalError {
         try {
             if(theObject.equals(federate.taxiInstanceHandle)) {
-                HLAinteger32BE taxiId = new HLA1516eInteger32BE();
-                taxiId.decode(theAttributes.get(federate.taxiHandle_taxiId));
 
                 HLAinteger32BE taxiAreaId = new HLA1516eInteger32BE();
                 taxiAreaId.decode(theAttributes.get(federate.taxiHandle_areaId));
+
+                HLAinteger32BE taxiId = new HLA1516eInteger32BE();
+                taxiId.decode(theAttributes.get(federate.taxiHandle_taxiId));
+
 
                 federate.updateTaxiValues(taxiId.getValue(), taxiAreaId.getValue());
             }
@@ -223,17 +225,7 @@ public class AreaFederateAmbassador extends NullFederateAmbassador {
                                    LogicalTime time,
                                    OrderType receivedOrdering,
                                    SupplementalReceiveInfo receiveInfo) throws FederateInternalError {
-        try {
-            if (interactionClass.equals(federate.joinTaxiQueueHandle)) {
-                federate.handleInteractionJoinTaxiQueue(theParameters);
-            }
-            if (interactionClass.equals(federate.joinPassengerQueueHandle)) {
-                federate.handleInteractionJoinPassengerQueue(theParameters);
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
 
 //    @Override
