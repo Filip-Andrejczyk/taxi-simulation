@@ -140,7 +140,7 @@ public class PassengerFederate {
         publishAndSubscribe();
         log( "Published and Subscribed" );
 
-
+        waitForUser();
         simulationLoop();
 
     }
@@ -211,7 +211,7 @@ public class PassengerFederate {
             nextPassengerTime = getSimTime() + random.nextInt(20) + 10;
         }
         advanceTime(1);
-        log( "Time Advanced to " + fedamb.federateTime );
+//        log( "Time Advanced to " + fedamb.federateTime );
     }
 
     public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException {

@@ -112,7 +112,7 @@ public class TaxiFederate
     protected ParameterHandle publishNumOfAreas_numOfAreas;
 
     private int numOfAreas = 4;
-    private int numOfTaxis = 8;
+    private int numOfTaxis = 16;
 
     private ArrayList<Taxi> taxis = new ArrayList<Taxi>();
 
@@ -196,14 +196,11 @@ public class TaxiFederate
         ////////////////////////////
         // 4. join the federation //
         ////////////////////////////
-        URL[] joinModules = new URL[]{
-                (new File("foms/TaxiSim.xml")).toURI().toURL()
-        };
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
-                "TaxiFederate",   // federate type
-                "TaxiSimulation",     // name of federation
-                joinModules );           // modules we want to add
+                "Taxi",   // federate type
+                "TaxiSimulation"     // name of federation
+                 );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
 
@@ -272,21 +269,7 @@ public class TaxiFederate
 
         waitForUser();//wait for user to confirm that area has subscribed to taxi object
 
-        for(int i=0, j=0; i<numOfTaxis; i++, j++){
-            if(j>=numOfAreas){
-                j=0;
-            }
-            taxis.add(new Taxi(j, this));
-        }
-
-        while(fedamb.isRunning){
-
-//            for( int i = 0; i < ITERATIONS; i++ )
-//            {
-                advanceTime( 1.0 );
-                log( "Time Advanced to " + fedamb.federateTime );
-//            }
-        }
+        simulationLoop();
 
 //        //////////////////////////////////////
 //        // 11. delete the object we created //
@@ -371,12 +354,12 @@ public class TaxiFederate
 
     private void publishTaxiObject() throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError, InvalidObjectClassHandle, AttributeNotDefined, ObjectClassNotDefined, SaveInProgress, RestoreInProgress, ObjectClassNotPublished {
         taxiHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Taxis");
-        taxiHandle_taxiId = rtiamb.getAttributeHandle(taxiHandle, "taxiId");
         taxiHandle_areaId = rtiamb.getAttributeHandle(taxiHandle, "areaId");
+        taxiHandle_taxiId = rtiamb.getAttributeHandle(taxiHandle, "taxiId");
 
         AttributeHandleSet attributesToPublic = rtiamb.getAttributeHandleSetFactory().create();
-        attributesToPublic.add(taxiHandle_taxiId);
         attributesToPublic.add(taxiHandle_areaId);
+        attributesToPublic.add(taxiHandle_taxiId);
         rtiamb.publishObjectClassAttributes(taxiHandle, attributesToPublic);
         taxiInstanceHandle = rtiamb.registerObjectInstance(taxiHandle);
     }
@@ -403,6 +386,7 @@ public class TaxiFederate
         buffer.decode(theParameters.get(executeRide_destinationId));
         areaId = buffer.getValue();
         taxis.get(taxiId).updateAreaId(areaId);
+        log("Taxi nr "+taxiId + " dojechało do obszaru nr " + areaId);
     }
 
     public void setNumOfAreas(int numOfAreas){
@@ -439,29 +423,41 @@ public class TaxiFederate
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( taxiInstanceHandle, attributes, generateTag(), time );
+        log("czas ["+getSimTime()+"] W strefie ("+areaId+") pojawiła się taxi o id ["+taxiId+"]");
     }
 
     public void simulationLoop() throws RTIexception {
-        while (fedamb.isRunning) {
-            //spawnuj taxuwy
-            handleTaxiSpawn();
-        }
-    }
-
-    private void handleTaxiSpawn() throws RTIexception {
-        if (getSimTime() >= nextTaxiTime){
-            int numberOfTaxisToSpawn = random.nextInt(3) + 1;
-            //TODO parametryzacja rozkładu generowania taksówek
-
-            for (int i = 0; i < numberOfTaxisToSpawn; i++){
-                int areaId = random.nextInt(numOfAreas);
-                Taxi newTaxi = new Taxi(areaId, this);
-                taxis.add(newTaxi);
-                log("czas ["+getSimTime()+"] W strefie ("+areaId+") pojawiła się taxi o id ["+newTaxi.taxiId+"]");
+        for(int i=0, j=0; i<numOfTaxis; i++, j++){
+            if(j>=numOfAreas){
+                j=0;
             }
-            nextTaxiTime = getSimTime() + random.nextInt(20) + 10;
+            taxis.add(new Taxi(j));
+        }
+        while(fedamb.isRunning){
+            for(Taxi taxi : taxis){
+                if(taxi.isIsToJoinQueue()){
+                    updateInstanceValues(taxi.taxiId, taxi.areaId);
+                    taxi.setIsToJoinQueue(false);
+                }
+            }
+            advanceTime( 1.0 );
         }
     }
+
+//    private void handleTaxiSpawn() throws RTIexception {
+//        if (getSimTime() >= nextTaxiTime){
+//            int numberOfTaxisToSpawn = random.nextInt(3) + 1;
+//            //TODO parametryzacja rozkładu generowania taksówek
+//
+//            for (int i = 0; i < numberOfTaxisToSpawn; i++){
+//                int areaId = random.nextInt(numOfAreas);
+//                Taxi newTaxi = new Taxi(areaId);
+//                taxis.add(newTaxi);
+//                log("czas ["+getSimTime()+"] W strefie ("+areaId+") pojawiła się taxi o id ["+newTaxi.taxiId+"]");
+//            }
+//            nextTaxiTime = getSimTime() + random.nextInt(20) + 10;
+//        }
+//    }
 
     protected double getSimTime() {
         return fedamb.federateTime;

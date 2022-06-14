@@ -7,27 +7,25 @@ public class Taxi {
     public int taxiId;
     public int areaId;
     private static int idenum = 0;
-    TaxiFederate taxiFederate;
+    private boolean isToJoinQueue;
 
-    public Taxi(int areaId, TaxiFederate taxiFederate) {
+    public Taxi(int areaId) {
         this.taxiId = idenum++;
         this.areaId = areaId;
-        this.taxiFederate = taxiFederate;
-        updateInstane();
+        isToJoinQueue = true;
     }
 
     public void updateAreaId(int areaId) throws RTIexception {
         this.areaId = areaId;
-        updateInstane();
+        isToJoinQueue = true;
     }
 
-    private void updateInstane(){
-        try{
-            taxiFederate.updateInstanceValues(this.taxiId, this.areaId);
-        }
-        catch(RTIexception e){
-            e.printStackTrace();
-        }
+    public void setIsToJoinQueue(boolean isToJoinQueue){
+        this.isToJoinQueue = isToJoinQueue;
+    }
+
+    public boolean isIsToJoinQueue(){
+        return isToJoinQueue;
     }
 
 }

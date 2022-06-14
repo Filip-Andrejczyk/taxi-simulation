@@ -191,6 +191,7 @@ public class AreaFederate {
     public void updateTaxiValues(int taxiId, int areaId) throws RTIexception {
         boolean wasRemoved = taxisList.removeIf(x -> x.getVal1() == taxiId);
         taxisList.add(new Tuple<>(taxiId, areaId));
+        areasList.get(areaId).addTaxiToQueue(taxiId);
         log(wasRemoved
                 ?
                 "Zaktualizowano dane taxi nr " + taxiId
@@ -375,10 +376,10 @@ public class AreaFederate {
                     log("czas ["+getSimTime()+"] W strefie ("+area.areaId+") pasażer o id ("+passengerToRide+")"+" oczekuje na przyjazd taksówki");
 
                 }
-                log("czas ["+getSimTime()+"] W strefie ("+area.areaId+") nie ma ani pasażerów ani taksówek.");
+//                log("czas ["+getSimTime()+"] W strefie ("+area.areaId+") nie ma ani pasażerów ani taksówek.");
             }
             advanceTime(1);
-            log( "Time Advanced to " + fedamb.federateTime );
+//            log( "Time Advanced to " + fedamb.federateTime );
         }
     }
 
