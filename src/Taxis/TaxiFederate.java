@@ -10,6 +10,7 @@ import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import org.jgroups.util.Tuple;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import util.SimPar;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -132,6 +133,10 @@ public class TaxiFederate
         System.out.println( "TaxiFederate   : " + message );
     }
 
+    private void logwithTime( String message )
+    {
+        System.out.println( "czas ["+getSimTime()+"] TaxiFederate   : " + message );
+    }
     /**
      * This method will block until the user presses enter
      */
@@ -386,7 +391,7 @@ public class TaxiFederate
         buffer.decode(theParameters.get(executeRide_destinationId));
         areaId = buffer.getValue();
         taxis.get(taxiId).updateAreaId(areaId);
-        log("Taxi nr "+taxiId + " dojechało do obszaru nr " + areaId);
+        logwithTime("Taxi nr "+taxiId + " dojechało do obszaru nr " + areaId);
     }
 
     public void setNumOfAreas(int numOfAreas){
@@ -423,7 +428,7 @@ public class TaxiFederate
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( taxiInstanceHandle, attributes, generateTag(), time );
-        log("czas ["+getSimTime()+"] W strefie ("+areaId+") pojawiła się taxi o id ["+taxiId+"]");
+        logwithTime("W strefie ("+areaId+") pojawiła się taxi o id ["+taxiId+"]");
     }
 
     public void simulationLoop() throws RTIexception {
@@ -433,7 +438,7 @@ public class TaxiFederate
             }
             taxis.add(new Taxi(j));
         }
-        while(fedamb.isRunning){
+        while(fedamb.isRunning && getSimTime()< SimPar.simEnd){
             for(Taxi taxi : taxis){
                 if(taxi.isIsToJoinQueue()){
                     updateInstanceValues(taxi.taxiId, taxi.areaId);
@@ -453,7 +458,7 @@ public class TaxiFederate
 //                int areaId = random.nextInt(numOfAreas);
 //                Taxi newTaxi = new Taxi(areaId);
 //                taxis.add(newTaxi);
-//                log("czas ["+getSimTime()+"] W strefie ("+areaId+") pojawiła się taxi o id ["+newTaxi.taxiId+"]");
+//                logwithTime("czas ["+getSimTime()+"] W strefie ("+areaId+") pojawiła się taxi o id ["+newTaxi.taxiId+"]");
 //            }
 //            nextTaxiTime = getSimTime() + random.nextInt(20) + 10;
 //        }

@@ -9,6 +9,7 @@ import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import util.SimPar;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -52,6 +53,11 @@ public class PassengerFederate {
     private void log( String message )
     {
         System.out.println( "PassengerFederate   : " + message );
+    }
+
+    private void logwithTime( String message )
+    {
+        System.out.println( "czas ["+getSimTime()+"] PassengerFederate   : " + message );
     }
 
 
@@ -146,7 +152,7 @@ public class PassengerFederate {
     }
 
     public void simulationLoop() throws RTIexception {
-        while (fedamb.isRunning){
+        while (fedamb.isRunning && getSimTime() < SimPar.simEnd){
             //dołączać do kolejki pasażerów
             handlePassengerSpawn();
         }
@@ -206,12 +212,12 @@ public class PassengerFederate {
                 }
                 Passenger newPassenger = new Passenger(originId, destinationId, this);
                 passengersList.add(newPassenger);
-                log("czas ["+getSimTime()+"] W strefie ("+originId+") pojawił się klient chcący pojechać do strefy ("+destinationId+")");
+                logwithTime("W strefie ("+originId+") pojawił się klient chcący pojechać do strefy ("+destinationId+")");
             }
             nextPassengerTime = getSimTime() + random.nextInt(20) + 10;
         }
         advanceTime(1);
-//        log( "Time Advanced to " + fedamb.federateTime );
+//        logwithTime( "Time Advanced to " + fedamb.federateTime );
     }
 
     public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException {
@@ -222,7 +228,7 @@ public class PassengerFederate {
         buffer.decode(theParameters.get(executeRide_destinationId));
         destinationId = buffer.getValue();
         passengersList.removeIf(x -> x.passengerId==passengerId);
-        log("Passenger #"+passengerId+" has finished their ride at area #" + destinationId );
+        logwithTime("Pasażer #"+passengerId+" zakończył przejazd w obszarze #" + destinationId );
     }
 
     public void setNumOfAreas(int numOfAreas){

@@ -85,6 +85,9 @@ public class StatisticFederateAmbassador extends NullFederateAmbassador {
                                         String objectName )
             throws FederateInternalError
     {
+        if (theObjectClass.equals(federate.areaHandle)){
+            federate.areaInstanceHandle = theObject;
+        }
         log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
                 theObjectClass + ", name=" + objectName );
     }
@@ -119,124 +122,56 @@ public class StatisticFederateAmbassador extends NullFederateAmbassador {
         log( "Object Removed: handle=" + theObject );
     }
 
-//    @Override
-//    public void receiveInteraction( InteractionClassHandle interactionClass,
-//                                    ParameterHandleValueMap theParameters,
-//                                    byte[] tag,
-//                                    OrderType sentOrdering,
-//                                    TransportationTypeHandle theTransport,
-//                                    LogicalTime time,
-//                                    OrderType receivedOrdering,
-//                                    SupplementalReceiveInfo receiveInfo )
-//            throws FederateInternalError
-//    {
-//        StringBuilder builder = new StringBuilder( "Interaction Received:" );
-//
-//        // print the handle
-//        builder.append( " handle=" + interactionClass );
-//        if( interactionClass.equals(federate.addProductsHandle) )
-//        {
-//            builder.append( " (addProductsHandle)" );
-//        }
-//
-//        // print the tag
-//        builder.append( ", tag=" + new String(tag) );
-//        // print the time (if we have it) we'll get null if we are just receiving
-//        // a forwarded call from the other reflect callback above
-//        if( time != null )
-//        {
-//            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-//        }
-//
-//        // print the parameer information
-//        builder.append( ", parameterCount=" + theParameters.size() );
-//        builder.append( "\n" );
-//        for( ParameterHandle parameter : theParameters.keySet() )
-//        {
-//            // print the parameter handle
-//            builder.append( "\tparamHandle=" );
-//            builder.append( parameter );
-//            // print the parameter value
-//            builder.append( ", paramValue=" );
-//            builder.append( theParameters.get(parameter).length );
-//            builder.append( " bytes" );
-//            builder.append( "\n" );
-//        }
-//
-//        log( builder.toString() );
-//    }
+    @Override
+    public void receiveInteraction( InteractionClassHandle interactionClass,
+                                    ParameterHandleValueMap theParameters,
+                                    byte[] tag,
+                                    OrderType sentOrdering,
+                                    TransportationTypeHandle theTransport,
+                                    LogicalTime time,
+                                    OrderType receivedOrdering,
+                                    SupplementalReceiveInfo receiveInfo )
+            throws FederateInternalError
+    {
+        StringBuilder builder = new StringBuilder( "Interaction Received:" );
 
-//    @Override
-//    public void reflectAttributeValues( ObjectInstanceHandle theObject,
-//                                        AttributeHandleValueMap theAttributes,
-//                                        byte[] tag,
-//                                        OrderType sentOrdering,
-//                                        TransportationTypeHandle theTransport,
-//                                        LogicalTime time,
-//                                        OrderType receivedOrdering,
-//                                        SupplementalReflectInfo reflectInfo )
-//            throws FederateInternalError
-//    {
-//        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-//
-//        // print the handle
-//        builder.append( " handle=" + theObject );
-//        // print the tag
-//        builder.append( ", tag=" + new String(tag) );
-//        // print the time (if we have it) we'll get null if we are just receiving
-//        // a forwarded call from the other reflect callback above
-//        if( time != null )
-//        {
-//            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-//        }
-//
-//        // print the attribute information
-//        builder.append( ", attributeCount=" + theAttributes.size() );
-//        builder.append( "\n" );
-//        for( AttributeHandle attributeHandle : theAttributes.keySet() )
-//        {
-//            // print the attibute handle
-//            builder.append( "\tattributeHandle=" );
-//
-//            // if we're dealing with Flavor, decode into the appropriate enum value
-//            if( attributeHandle.equals(federate.storageAvailableHandle) )
-//            {
-//                builder.append( attributeHandle );
-//                builder.append( " (Available)    " );
-//                builder.append( ", attributeValue=" );
-//                HLAinteger32BE available = new HLA1516eInteger32BE();
-//                try {
-//                    available.decode(theAttributes.get(attributeHandle));
-//                } catch (DecoderException e) {
-//                    e.printStackTrace();
-//                }
-//                builder.append( available.getValue() );
-//                federate.storageAvailable = available.getValue();
-//            }
-//            else if( attributeHandle.equals(federate.storageMaxHandle) )
-//            {
-//                builder.append( attributeHandle );
-//                builder.append( " (Max)" );
-//                builder.append( ", attributeValue=" );
-//                HLAinteger32BE max = new HLA1516eInteger32BE();
-//                try {
-//                    max.decode(theAttributes.get(attributeHandle));
-//                } catch (DecoderException e) {
-//                    e.printStackTrace();
-//                }
-//                builder.append( max.getValue() );
-//                federate.storageMax = max.getValue();
-//            }
-//            else
-//            {
-//                builder.append( attributeHandle );
-//                builder.append( " (Unknown)   " );
-//            }
-//
-//            builder.append( "\n" );
-//        }
-//
-//        log( builder.toString() );
-//    }
+        try{
+            if( interactionClass.equals(federate.executeRideHandle) )
+            {
+                federate.handleInteractionExecuteRide();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 
+
+        log( builder.toString() );
+    }
+
+    @Override
+    public void reflectAttributeValues( ObjectInstanceHandle theObject,
+                                        AttributeHandleValueMap theAttributes,
+                                        byte[] tag,
+                                        OrderType sentOrdering,
+                                        TransportationTypeHandle theTransport,
+                                        LogicalTime time,
+                                        OrderType receivedOrdering,
+                                        SupplementalReflectInfo reflectInfo )
+            throws FederateInternalError {
+        try {
+            if (theObject.equals(federate.areaInstanceHandle)) {
+
+                HLAinteger32BE areaId = new HLA1516eInteger32BE();
+                areaId.decode(theAttributes.get(federate.areaHandle_areaId));
+
+                HLAinteger32BE queueLength = new HLA1516eInteger32BE();
+                queueLength.decode(theAttributes.get(federate.areaHandle_queueLength));
+
+
+                federate.updateQueueValue(areaId.getValue(), queueLength.getValue());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

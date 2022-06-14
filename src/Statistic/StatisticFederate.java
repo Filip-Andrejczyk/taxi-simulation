@@ -1,7 +1,10 @@
 package Statistic;
 
 
+import Statistic.monitors.Diagram;
+import Statistic.monitors.MonitoredVar;
 import hla.rti1516e.*;
+import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
@@ -11,16 +14,22 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import org.jgroups.util.Tuple;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import util.SimPar;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class StatisticFederate{
     public static final String READY_TO_RUN = "ReadyToRun";
-
 
     private RTIambassador rtiamb;
     private StatisticFederateAmbassador fedamb;  // created when we connect
@@ -29,24 +38,27 @@ public class StatisticFederate{
 
     //subs for interactions:
     protected InteractionClassHandle executeRideHandle;
-    protected ParameterHandle executeRide_time;
     protected ParameterHandle executeRide_destinationId;
+    protected ParameterHandle executeRide_passengerId;
+    protected ParameterHandle executeRide_taxiId;
 
-    protected InteractionClassHandle joinTaxiQueueHandle;
-    protected ParameterHandle joinTaxiQueue_taxiId;
-    protected ParameterHandle joinTaxiQueue_areaId;
+    protected ObjectClassHandle areaHandle;
+    protected AttributeHandle areaHandle_areaId;
+    protected AttributeHandle areaHandle_queueLength;
+    public ObjectInstanceHandle areaInstanceHandle;
 
-    protected InteractionClassHandle joinPassengerQueueHandle;
-    protected ParameterHandle joinPassengerQueue_passengerId;
-    protected ParameterHandle joinPassengerQueue_areaId;
-
-    protected InteractionClassHandle publishNumOfAreasHandle;
-    protected ParameterHandle publishNumOfAreas_numOfAreas;
+    private List<Tuple<Integer, MonitoredVar>> areaLengths;
+    private int rideCounter =0;
 
 
     private void log( String message )
     {
-        System.out.println( "ConsumerFederate   : " + message );
+        System.out.println( "StatisticFederate   : " + message );
+    }
+
+    private void logwithTime( String message )
+    {
+        System.out.println( "czas ["+getSimTime()+"] StatisticFederate   : " + message );
     }
 
     private void waitForUser()
@@ -98,33 +110,25 @@ public class StatisticFederate{
     private void subscribeToExecuteRideInteraction() throws RTIexception {
         executeRideHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.executeRide");
         rtiamb.subscribeInteractionClass(executeRideHandle);
-        executeRide_time = rtiamb.getParameterHandle(executeRideHandle, "time");
         executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
+        executeRide_passengerId = rtiamb.getParameterHandle(executeRideHandle, "passengerId");
+        executeRide_taxiId = rtiamb.getParameterHandle(executeRideHandle, "taxiId");
     }
-    private void subscribeToJoinTaxiQueueInteraction() throws RTIexception {
-        joinTaxiQueueHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.joinTaxiQueue");
-        rtiamb.subscribeInteractionClass(joinTaxiQueueHandle);
-        joinTaxiQueue_taxiId = rtiamb.getParameterHandle(joinTaxiQueueHandle, "taxiId");
-        joinTaxiQueue_areaId = rtiamb.getParameterHandle(joinTaxiQueueHandle, "areaId");
-    }
-    private void subscribeToJoinPassengerQueueInteraction() throws RTIexception {
-        joinPassengerQueueHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.joinPassengerQueue");
-        rtiamb.subscribeInteractionClass(joinPassengerQueueHandle);
-        joinPassengerQueue_passengerId = rtiamb.getParameterHandle(joinPassengerQueueHandle, "passengerId");
-        joinPassengerQueue_areaId = rtiamb.getParameterHandle(joinPassengerQueueHandle, "areaId");
-    }
-    private void subscribeToPublisNumOfAreasInteraction() throws RTIexception {
-        publishNumOfAreasHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
-        rtiamb.subscribeInteractionClass(publishNumOfAreasHandle);
-        publishNumOfAreas_numOfAreas = rtiamb.getParameterHandle(publishNumOfAreasHandle, "numOfAreas");
+
+    private void subscribeToAreaObject() throws RTIexception {
+        areaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Areas");
+        areaHandle_areaId = rtiamb.getAttributeHandle(areaHandle, "areaId");
+        areaHandle_queueLength = rtiamb.getAttributeHandle(areaHandle, "queueLength");
+        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
+        attributes.add(areaHandle_areaId);
+        attributes.add(areaHandle_queueLength);
+        rtiamb.subscribeObjectClassAttributes(areaHandle, attributes);
     }
 
     private void publishAndSubscribe() throws RTIexception
     {
-    subscribeToExecuteRideInteraction();
-    subscribeToJoinTaxiQueueInteraction();
-    subscribeToPublisNumOfAreasInteraction();
-    subscribeToJoinPassengerQueueInteraction();
+        subscribeToAreaObject();
+        subscribeToExecuteRideInteraction();
     }
 
     private void advanceTime( double timestep ) throws RTIexception
@@ -142,158 +146,118 @@ public class StatisticFederate{
         }
     }
 
-    //todooo
+    public void updateQueueValue(int areaId, int queueLength) throws RTIexception {
+        Optional o = areaLengths.stream().filter(x -> x.getVal1() == areaId).findFirst();
+        if (o.isPresent()){
+            ((Tuple<Integer, MonitoredVar>)o.get()).getVal2().setValue(queueLength, getSimTime());
+        }
+        else{
+            MonitoredVar v = new MonitoredVar();
+            v.setValue(queueLength, getSimTime());
+            areaLengths.add(new Tuple<>(areaId, v));
+        }
+    }
+    public void handleInteractionExecuteRide(){
+        rideCounter++;
+    }
+
     public void runFederate( String federateName ) throws Exception
     {
-//        /////////////////////////////////////////////////
-//        // 1 & 2. create the RTIambassador and Connect //
-//        /////////////////////////////////////////////////
-//        log( "Creating RTIambassador" );
-//        rtiamb = RtiFactoryFactory.getRtiFactory().getRtiAmbassador();
-//        encoderFactory = RtiFactoryFactory.getRtiFactory().getEncoderFactory();
-//
-//        // connect
-//        log( "Connecting..." );
-//        fedamb = new ProducerFederateAmbassador( this );
-//        rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
-//
-//        //////////////////////////////
-//        // 3. create the federation //
-//        //////////////////////////////
-//        log( "Creating Federation..." );
-//        // We attempt to create a new federation with the first three of the
-//        // restaurant FOM modules covering processes, food and drink
-//        try
-//        {
-//            URL[] modules = new URL[]{
-//                    (new File("foms/ProducerConsumer.xml")).toURI().toURL(),
-//            };
-//
-//            rtiamb.createFederationExecution( "ProducerConsumerFederation", modules );
-//            log( "Created Federation" );
-//        }
-//        catch( FederationExecutionAlreadyExists exists )
-//        {
-//            log( "Didn't create federation, it already existed" );
-//        }
-//        catch( MalformedURLException urle )
-//        {
-//            log( "Exception loading one of the FOM modules from disk: " + urle.getMessage() );
-//            urle.printStackTrace();
-//            return;
-//        }
-//
-//        ////////////////////////////
-//        // 4. join the federation //
-//        ////////////////////////////
-//
-//        rtiamb.joinFederationExecution( federateName,            // name for the federate
-//                "producer",   // federate type
-//                "ProducerConsumerFederation"     // name of federation
-//        );           // modules we want to add
-//
-//        log( "Joined Federation as " + federateName );
-//
-//        // cache the time factory for easy access
-//        this.timeFactory = (HLAfloat64TimeFactory)rtiamb.getTimeFactory();
-//
-//        ////////////////////////////////
-//        // 5. announce the sync point //
-//        ////////////////////////////////
-//        // announce a sync point to get everyone on the same page. if the point
-//        // has already been registered, we'll get a callback saying it failed,
-//        // but we don't care about that, as long as someone registered it
-//        rtiamb.registerFederationSynchronizationPoint( READY_TO_RUN, null );
-//        // wait until the point is announced
-//        while( fedamb.isAnnounced == false )
-//        {
-//            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
-//        }
-//
-//        // WAIT FOR USER TO KICK US OFF
-//        // So that there is time to add other federates, we will wait until the
-//        // user hits enter before proceeding. That was, you have time to start
-//        // other federates.
-//        waitForUser();
-//
-//        ///////////////////////////////////////////////////////
-//        // 6. achieve the point and wait for synchronization //
-//        ///////////////////////////////////////////////////////
-//        // tell the RTI we are ready to move past the sync point and then wait
-//        // until the federation has synchronized on
-//        rtiamb.synchronizationPointAchieved( READY_TO_RUN );
-//        log( "Achieved sync point: " +READY_TO_RUN+ ", waiting for federation..." );
-//        while( fedamb.isReadyToRun == false )
-//        {
-//            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
-//        }
-//
-//        /////////////////////////////
-//        // 7. enable time policies //
-//        /////////////////////////////
-//        // in this section we enable/disable all time policies
-//        // note that this step is optional!
-//        enableTimePolicy();
-//        log( "Time Policy Enabled" );
-//
-//        //////////////////////////////
-//        // 8. publish and subscribe //
-//        //////////////////////////////
-//        // in this section we tell the RTI of all the data we are going to
-//        // produce, and all the data we want to know about
-//        publishAndSubscribe();
-//        log( "Published and Subscribed" );
-//
-////		// 10. do the main simulation loop //
-//        /////////////////////////////////////
-//        // here is where we do the meat of our work. in each iteration, we will
-//        // update the attribute values of the object we registered, and will
-//        // send an interaction.
-//        Producer producer = new Producer();
-//        while( fedamb.isRunning )
-//        {
-//            int producedValue = producer.produce();
-//            if(storageAvailable + producedValue <= storageMax ) {
-//                ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
-//                ParameterHandle addProductsCountHandle = rtiamb.getParameterHandle(addProductsHandle, "count");
-//                HLAinteger32BE count = encoderFactory.createHLAinteger32BE(producedValue);
-//                parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
-//                rtiamb.sendInteraction(addProductsHandle, parameterHandleValueMap, generateTag());
-//            }
-//            else
-//            {
-//                log("Producing canceled because of full storage.");
-//            }
-//            // 9.3 request a time advance and wait until we get it
-//            advanceTime(producer.getTimeToNext());
-//            log( "Time Advanced to " + fedamb.federateTime );
-//        }
-//
-//
-//        ////////////////////////////////////
-//        // 12. resign from the federation //
-//        ////////////////////////////////////
-//        rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
-//        log( "Resigned from Federation" );
-//
-//        ////////////////////////////////////////
-//        // 13. try and destroy the federation //
-//        ////////////////////////////////////////
-//        // NOTE: we won't die if we can't do this because other federates
-//        //       remain. in that case we'll leave it for them to clean up
-//        try
-//        {
-//            rtiamb.destroyFederationExecution( "ExampleFederation" );
-//            log( "Destroyed Federation" );
-//        }
-//        catch( FederationExecutionDoesNotExist dne )
-//        {
-//            log( "No need to destroy federation, it doesn't exist" );
-//        }
-//        catch( FederatesCurrentlyJoined fcj )
-//        {
-//            log( "Didn't destroy federation, federates still joined" );
-//        }
+        log( "Creating RTIambassador" );
+        rtiamb = RtiFactoryFactory.getRtiFactory().getRtiAmbassador();
+        encoderFactory = RtiFactoryFactory.getRtiFactory().getEncoderFactory();
+
+        log( "Connecting..." );
+        fedamb = new StatisticFederateAmbassador( this );
+        rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
+
+
+        log( "Creating Federation..." );
+        try
+        {
+            URL[] modules = new URL[]{
+                    (new File("foms/TaxiSim.xml")).toURI().toURL(),
+            };
+
+            rtiamb.createFederationExecution( "TaxiSimulation", modules );
+            log( "Created Federation" );
+        }
+        catch( FederationExecutionAlreadyExists exists )
+        {
+            log( "Didn't create federation, it already existed" );
+        }
+        catch( MalformedURLException urle )
+        {
+            log( "Exception loading one of the FOM modules from disk: " + urle.getMessage() );
+            urle.printStackTrace();
+            return;
+        }
+
+        rtiamb.joinFederationExecution( federateName,            // name for the federate
+                "Statistic",   // federate type
+                "TaxiSimulation"     // name of federation
+        );           // modules we want to add
+
+        log( "Joined Federation as " + federateName );
+
+        // cache the time factory for easy access
+        this.timeFactory = (HLAfloat64TimeFactory)rtiamb.getTimeFactory();
+        rtiamb.registerFederationSynchronizationPoint( READY_TO_RUN, null );
+        // wait until the point is announced
+        while( fedamb.isAnnounced == false )
+        {
+            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        }
+
+        waitForUser();
+
+        rtiamb.synchronizationPointAchieved( READY_TO_RUN );
+        log( "Achieved sync point: " +READY_TO_RUN+ ", waiting for federation..." );
+        while( fedamb.isReadyToRun == false )
+        {
+            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        }
+
+        enableTimePolicy();
+        log( "Time Policy Enabled" );
+
+        publishAndSubscribe();
+        log( "Published and Subscribed" );
+
+        areaLengths = new ArrayList<>();
+        while( fedamb.isRunning && getSimTime() < SimPar.simEnd)
+        {
+
+            advanceTime(1);
+//            logwithTime( "Time Advanced to " + fedamb.federateTime );
+        }
+        Diagram d = new Diagram(Diagram.DiagramType.TIME, "Długości kolejek pasażerów w czasie");
+        Color[] lista = {Color.GREEN, Color.BLUE, Color.RED, Color.MAGENTA};
+        for(Tuple<Integer, MonitoredVar> area : areaLengths){
+            d.add(area.getVal2(), lista[area.getVal1()%4], "Długość kolejki pasażerów obszaru " + area.getVal1());
+        }
+        d.show();
+
+        rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
+        log( "Resigned from Federation" );
+
+        try
+        {
+            rtiamb.destroyFederationExecution( "ExampleFederation" );
+            log( "Destroyed Federation" );
+        }
+        catch( FederationExecutionDoesNotExist dne )
+        {
+            log( "No need to destroy federation, it doesn't exist" );
+        }
+        catch( FederatesCurrentlyJoined fcj )
+        {
+            log( "Didn't destroy federation, federates still joined" );
+        }
+    }
+
+    protected double getSimTime() {
+        return fedamb.federateTime;
     }
 
     private byte[] generateTag()

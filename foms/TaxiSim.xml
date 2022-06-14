@@ -61,6 +61,27 @@
                     <order>TimeStamp</order>
                 </attribute>
             </objectClass>
+            <objectClass>
+                <name>Areas</name>
+                <sharing>PublishSubscribe</sharing>
+                <semantics>Obszary i ich zajetosc kolejek</semantics>
+                <attribute>
+                    <name>areaId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                </attribute>
+                <attribute>
+                    <name>queueLength</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                </attribute>
+            </objectClass>
         </objectClass>
     </objects>
     <interactions>

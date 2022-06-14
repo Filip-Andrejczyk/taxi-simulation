@@ -1,8 +1,6 @@
 package Areas;
 
-import Passengers.Passenger;
 import hla.rti1516e.*;
-import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
@@ -11,7 +9,7 @@ import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import org.jgroups.util.Triple;
 import org.jgroups.util.Tuple;
-import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import util.SimPar;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,26 +30,32 @@ public class AreaFederate {
     private List<Area> areasList;
 
     double[][] rideTimes = {
-            {0.0, 15.12, 27.67, 43.12},
-            {15.12, 0.0, 23.99, 32.11},
-            {27.67, 23.99, 0.0, 60.22},
-            {43.12, 32.11, 60.22, 0.0}
+            {0.0, 3.0, 4.0, 5.0},
+            {3.0, 0.0, 3.0, 4.0},
+            {4.0, 3.0, 0.0, 3.0},
+            {5.0, 4.0, 3.0, 0.0}
     };
 
     private List<Tuple<Integer, Integer>> taxisList; //id, currentAreaId
     private List<Triple<Integer, Integer, Integer>> passengersList; //id, originID, destinationID
 
-    public ObjectInstanceHandle taxiInstanceHandle;
-    public ObjectInstanceHandle passengerInstanceHandle;
 
     protected ObjectClassHandle passengerHandle;
     protected AttributeHandle passengerHandle_originId;
     protected AttributeHandle passengerHandle_directionId;
     protected AttributeHandle passengerHandle_passengerId;
+    public ObjectInstanceHandle passengerInstanceHandle;
 
     protected ObjectClassHandle taxiHandle;
     protected AttributeHandle taxiHandle_areaId;
     protected AttributeHandle taxiHandle_taxiId;
+    public ObjectInstanceHandle taxiInstanceHandle;
+
+    protected ObjectClassHandle areaHandle;
+    protected AttributeHandle areaHandle_areaId;
+    protected AttributeHandle areaHandle_queueLength;
+    public ObjectInstanceHandle areaInstanceHandle;
+
 
 
     protected InteractionClassHandle executeRide;
@@ -61,6 +65,11 @@ public class AreaFederate {
     private void log( String message )
     {
         System.out.println( "AreaFederate   : " + message );
+    }
+
+    private void logwithTime( String message )
+    {
+        System.out.println( "czas ["+getSimTime()+"] AreaFederate   : " + message );
     }
 
     private void waitForUser()
@@ -123,7 +132,7 @@ public class AreaFederate {
         publishNumOfAreas = rtiamb.getInteractionClassHandle("HLAinteractionRoot.publishNumOfAreas");
         rtiamb.publishInteractionClass(executeRide);
         rtiamb.publishInteractionClass(publishNumOfAreas);
-
+        publishAreaObject();
         //sub for joinTaxiqueue:
 //        subscribeToJoinTaxiQueueInteraction();
         //sub for joinPassengerQueue:
@@ -156,6 +165,18 @@ public class AreaFederate {
         rtiamb.subscribeObjectClassAttributes(taxiHandle, attributes);
     }
 
+    private void publishAreaObject() throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError, InvalidObjectClassHandle, AttributeNotDefined, ObjectClassNotDefined, SaveInProgress, RestoreInProgress, ObjectClassNotPublished {
+        areaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Areas");
+        areaHandle_areaId = rtiamb.getAttributeHandle(areaHandle, "areaId");
+        areaHandle_queueLength = rtiamb.getAttributeHandle(areaHandle, "queueLength");
+
+        AttributeHandleSet attributesToPublic = rtiamb.getAttributeHandleSetFactory().create();
+        attributesToPublic.add(areaHandle_areaId);
+        attributesToPublic.add(areaHandle_queueLength);
+        rtiamb.publishObjectClassAttributes(areaHandle, attributesToPublic);
+        areaInstanceHandle = rtiamb.registerObjectInstance(areaHandle);
+    }
+
 
     private void advanceTime( double timestep ) throws RTIexception
     {
@@ -177,11 +198,24 @@ public class AreaFederate {
         return fedamb.federateTime;
     }
 
+    public void updateInstanceValues( int areaId, int queueLength) throws RTIexception
+    {
+        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+
+        HLAinteger32BE _areaId = encoderFactory.createHLAinteger32BE(areaId);
+        HLAinteger32BE _queueLength = encoderFactory.createHLAinteger32BE(queueLength);
+        attributes.put( areaHandle_areaId, _areaId.toByteArray() );
+        attributes.put( areaHandle_queueLength, _queueLength.toByteArray() );
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        rtiamb.updateAttributeValues( areaInstanceHandle, attributes, generateTag(), time );
+    }
+
     public void updatePassengerValues(int passengerId, int originId, int destinationId) throws RTIexception {
         boolean wasRemoved = passengersList.removeIf(x -> x.getVal1() == passengerId);
         passengersList.add(new Triple<>(passengerId, originId, destinationId));
         areasList.get(originId).addPassengerToQueue(passengerId);
-        log(wasRemoved
+        logwithTime(wasRemoved
                 ?
                 "Zaktualizowano dane pasażera nr " + passengerId
                 :
@@ -192,11 +226,7 @@ public class AreaFederate {
         boolean wasRemoved = taxisList.removeIf(x -> x.getVal1() == taxiId);
         taxisList.add(new Tuple<>(taxiId, areaId));
         areasList.get(areaId).addTaxiToQueue(taxiId);
-        log(wasRemoved
-                ?
-                "Zaktualizowano dane taxi nr " + taxiId
-                :
-                "Taxi nr " + taxiId + " dołączyło do kolejki w obszarze " + areaId);
+        logwithTime("Taxi nr " + taxiId + " dołączyło do kolejki w obszarze " + areaId);
     }
 
     private byte[] generateTag()
@@ -360,9 +390,8 @@ public class AreaFederate {
         handlePublishNumbOfAreas(numbOfAreas);
         passengersList = new ArrayList<>();
         taxisList = new ArrayList<>();
-        while( fedamb.isRunning )
+        while( fedamb.isRunning && getSimTime()< SimPar.simEnd)
         {
-
             for (Area area : areasList) {
                 if (area.passengerQueue.size() > 0) {
                     int passengerToRide = area.passengerQueue.pop();
@@ -373,13 +402,16 @@ public class AreaFederate {
 
                         handleExecuteRideInteraction(area.areaId, passengerToRide, passengerDestinationId, taxiToGetPassenger);
                     }
-                    log("czas ["+getSimTime()+"] W strefie ("+area.areaId+") pasażer o id ("+passengerToRide+")"+" oczekuje na przyjazd taksówki");
+                    else{
+                        logwithTime(" W strefie ("+area.areaId+") pasażer o id ("+passengerToRide+")"+" oczekuje na przyjazd taksówki");
+                    }
 
                 }
-//                log("czas ["+getSimTime()+"] W strefie ("+area.areaId+") nie ma ani pasażerów ani taksówek.");
+//                logwithTime("czas ["+getSimTime()+"] W strefie ("+area.areaId+") nie ma ani pasażerów ani taksówek.");
+                updateInstanceValues(area.areaId, area.passengerQueue.size());
             }
             advanceTime(1);
-//            log( "Time Advanced to " + fedamb.federateTime );
+//            logwithTime( "Time Advanced to " + fedamb.federateTime );
         }
     }
 
@@ -391,6 +423,10 @@ public class AreaFederate {
         );
         HLAfloat64Time ttime = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead);
         rtiamb.sendInteraction(publishNumOfAreas, params, generateTag(), ttime);
+    }
+
+    private double getRideTime(int areaId, int destId){
+        return rideTimes[areaId][destId];
     }
 
 
@@ -408,9 +444,8 @@ public class AreaFederate {
                 rtiamb.getParameterHandle(executeRide, "destinationId"),
                 encoderFactory.createHLAinteger32BE(passengerDestinationId).toByteArray()
         );
-        log("czas ["+getSimTime()+"] W strefie ("+ areaId +") pasażer o id ("+ passengerToRide +")"+" wsiadł do taksówki ["+ taxiToGetPassenger +"] i pojechał do strefy + ["+ passengerDestinationId +"]");
-
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead);
+        logwithTime("W strefie ("+ areaId +") pasażer o id ("+ passengerToRide +")"+" wsiadł do taksówki ["+ taxiToGetPassenger +"] i pojechał do strefy ["+ passengerDestinationId +"]");
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead + getRideTime(areaId, passengerDestinationId) );
         rtiamb.sendInteraction(executeRide, params, generateTag(), time);
     }
 
