@@ -231,10 +231,15 @@ public class StatisticFederate{
             advanceTime(1);
 //            logwithTime( "Time Advanced to " + fedamb.federateTime );
         }
-
-        rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
-        log( "Resigned from Federation" );
-
+        try
+        {
+            rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
+            log( "Resigned from Federation" );
+        }
+        catch( Exception e )
+        {
+            e.printStackTrace();
+        }
         try
         {
             rtiamb.destroyFederationExecution( "ExampleFederation" );

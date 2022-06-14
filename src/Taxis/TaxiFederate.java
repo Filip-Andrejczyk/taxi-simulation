@@ -285,8 +285,13 @@ public class TaxiFederate
         ////////////////////////////////////
         // 12. resign from the federation //
         ////////////////////////////////////
-        rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
-        log( "Resigned from Federation" );
+        try{
+            rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
+            log( "Resigned from Federation" );
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
 
         ////////////////////////////////////////
         // 13. try and destroy the federation //

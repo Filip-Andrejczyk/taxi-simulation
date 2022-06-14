@@ -148,7 +148,32 @@ public class PassengerFederate {
 
         waitForUser();
         simulationLoop();
+        try{
+            rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
+            log( "Resigned from Federation" );
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
 
+        ////////////////////////////////////////
+        // 13. try and destroy the federation //
+        ////////////////////////////////////////
+        // NOTE: we won't die if we can't do this because other federates
+        //       remain. in that case we'll leave it for them to clean up
+        try
+        {
+            rtiamb.destroyFederationExecution( "TaxiSimulation" );
+            log( "Destroyed Federation" );
+        }
+        catch( FederationExecutionDoesNotExist dne )
+        {
+            log( "No need to destroy federation, it doesn't exist" );
+        }
+        catch( FederatesCurrentlyJoined fcj )
+        {
+            log( "Didn't destroy federation, federates still joined" );
+        }
     }
 
     public void simulationLoop() throws RTIexception {
@@ -201,7 +226,7 @@ public class PassengerFederate {
 
     private void handlePassengerSpawn() throws RTIexception {
         if(getSimTime() >= nextPassengerTime) {
-            int numberOfPassengersToSpawn = random.nextInt(3) + 1;
+            int numberOfPassengersToSpawn = random.nextInt(20) + 1;
             //TODO PARAMETRYZACJA ROZKłADU GENEROWANIA PASAŻERÓW
             passengersList = new ArrayList<>();
             for (int i = 0; i < numberOfPassengersToSpawn; i++){

@@ -30,10 +30,10 @@ public class AreaFederate {
     private List<Area> areasList;
 
     double[][] rideTimes = {
-            {0.0, 3.0, 4.0, 5.0},
-            {3.0, 0.0, 3.0, 4.0},
-            {4.0, 3.0, 0.0, 3.0},
-            {5.0, 4.0, 3.0, 0.0}
+            {0.0, 20.0, 25.0, 30.0},
+            {20.0, 0.0, 20.0, 25.0},
+            {25.0, 20.0, 0.0, 20.0},
+            {30.0, 25.0, 20.0, 0.0}
     };
 
     private List<Tuple<Integer, Integer>> taxisList; //id, currentAreaId
@@ -360,8 +360,13 @@ public class AreaFederate {
         ////////////////////////////////////
         // 12. resign from the federation //
         ////////////////////////////////////
-        rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
-        log( "Resigned from Federation" );
+        try{
+            rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
+            log( "Resigned from Federation" );
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
 
         ////////////////////////////////////////
         // 13. try and destroy the federation //
