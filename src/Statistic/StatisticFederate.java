@@ -17,6 +17,7 @@ import hla.rti1516e.time.HLAfloat64TimeFactory;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
+import org.jgroups.util.Triple;
 import org.jgroups.util.Tuple;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import util.SimPar;
@@ -55,9 +56,10 @@ public class StatisticFederate extends Thread{
     protected ObjectClassHandle areaHandle;
     protected AttributeHandle areaHandle_areaId;
     protected AttributeHandle areaHandle_queueLength;
+    protected AttributeHandle areaHandle_taxiQueueLength;
     public ObjectInstanceHandle areaInstanceHandle;
 
-    private List<Tuple<Integer, MonitoredVar>> areaLengths;
+    private List<Triple<Integer, MonitoredVar, Integer>> areaLengths;
     private int rideCounter =0;
     private double sumOfWaiting=0;
 
@@ -146,9 +148,11 @@ public class StatisticFederate extends Thread{
         areaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Areas");
         areaHandle_areaId = rtiamb.getAttributeHandle(areaHandle, "areaId");
         areaHandle_queueLength = rtiamb.getAttributeHandle(areaHandle, "queueLength");
+        areaHandle_taxiQueueLength = rtiamb.getAttributeHandle(areaHandle, "taxiQueueLength");
         AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
         attributes.add(areaHandle_areaId);
         attributes.add(areaHandle_queueLength);
+        attributes.add(areaHandle_taxiQueueLength);
         rtiamb.subscribeObjectClassAttributes(areaHandle, attributes);
     }
 
@@ -171,21 +175,22 @@ public class StatisticFederate extends Thread{
         }
     }
 
-    public void updateQueueValue(int areaId, int queueLength) throws RTIexception {
+    public void updateQueueValue(int areaId, int queueLength, int taxiQueueLength) throws RTIexception {
         Optional o = areaLengths.stream().filter(x -> x.getVal1() == areaId).findFirst();
         if (o.isPresent()){
-            ((Tuple<Integer, MonitoredVar>)o.get()).getVal2().setValue(queueLength, getSimTime());
+            ((Triple<Integer, MonitoredVar,Integer>)o.get()).getVal2().setValue(queueLength, getSimTime());
         }
         else{
             MonitoredVar v = new MonitoredVar();
             v.setValue(queueLength, getSimTime());
-            areaLengths.add(new Tuple<>(areaId, v));
+            areaLengths.add(new Triple<>(areaId, v, taxiQueueLength));
         }
         Platform.runLater(
                 () ->{
                     passQueues.get(areaId).setText(queueLength+"");
+                    taxiQueues.get(areaId).setText(taxiQueueLength+"");
                     int overall=0;
-                    for(Tuple<Integer, MonitoredVar> t : areaLengths){
+                    for(Triple<Integer, MonitoredVar, Integer> t : areaLengths){
                         overall+=(int)(t.getVal2().getValue());
                     }
                     waitingNum.setText(overall+"");
@@ -267,7 +272,7 @@ public class StatisticFederate extends Thread{
         while( fedamb.isRunning && getSimTime() < SimPar.simEnd)
         {
             int overall=0;
-            for(Tuple<Integer, MonitoredVar> t : areaLengths){
+            for(Triple<Integer, MonitoredVar, Integer> t : areaLengths){
                 overall+=(int)(t.getVal2().getValue());
             }
             sumOfWaiting+=overall;
@@ -304,7 +309,7 @@ public class StatisticFederate extends Thread{
         }
         Diagram d = new Diagram(Diagram.DiagramType.TIME, "Długości kolejek pasażerów w czasie");
         Color[] lista = {Color.GREEN, Color.BLUE, Color.RED, Color.MAGENTA};
-        for(Tuple<Integer, MonitoredVar> area : areaLengths){
+        for(Triple<Integer, MonitoredVar, Integer> area : areaLengths){
             d.add(area.getVal2(), lista[area.getVal1()%4], "Długość kolejki pasażerów obszaru " + area.getVal1());
         }
         d.show();

@@ -167,8 +167,11 @@ public class StatisticFederateAmbassador extends NullFederateAmbassador {
                 HLAinteger32BE queueLength = new HLA1516eInteger32BE();
                 queueLength.decode(theAttributes.get(federate.areaHandle_queueLength));
 
+                HLAinteger32BE taxiQueueLength = new HLA1516eInteger32BE();
+                taxiQueueLength.decode(theAttributes.get(federate.areaHandle_taxiQueueLength));
 
-                federate.updateQueueValue(areaId.getValue(), queueLength.getValue());
+
+                federate.updateQueueValue(areaId.getValue(), queueLength.getValue(), taxiQueueLength.getValue());
             }
         } catch (Exception e) {
             e.printStackTrace();

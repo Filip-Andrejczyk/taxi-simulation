@@ -54,6 +54,7 @@ public class AreaFederate {
     protected ObjectClassHandle areaHandle;
     protected AttributeHandle areaHandle_areaId;
     protected AttributeHandle areaHandle_queueLength;
+    protected AttributeHandle areaHandle_taxiQueueLength;
     public ObjectInstanceHandle areaInstanceHandle;
 
 
@@ -147,10 +148,12 @@ public class AreaFederate {
         areaHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Areas");
         areaHandle_areaId = rtiamb.getAttributeHandle(areaHandle, "areaId");
         areaHandle_queueLength = rtiamb.getAttributeHandle(areaHandle, "queueLength");
+        areaHandle_taxiQueueLength = rtiamb.getAttributeHandle(areaHandle, "taxiQueueLength");
 
         AttributeHandleSet attributesToPublic = rtiamb.getAttributeHandleSetFactory().create();
         attributesToPublic.add(areaHandle_areaId);
         attributesToPublic.add(areaHandle_queueLength);
+        attributesToPublic.add(areaHandle_taxiQueueLength);
         rtiamb.publishObjectClassAttributes(areaHandle, attributesToPublic);
         areaInstanceHandle = rtiamb.registerObjectInstance(areaHandle);
     }
@@ -174,15 +177,17 @@ public class AreaFederate {
         return fedamb.federateTime;
     }
 
-    public void updateInstanceValues( int areaId, int queueLength) throws RTIexception
+    public void updateInstanceValues( int areaId, int queueLength, int taxiQueueLength) throws RTIexception
     {
         logwithTime(" areaId: " + areaId +" ql: " + queueLength);
-        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(3);
 
         HLAinteger32BE _areaId = encoderFactory.createHLAinteger32BE(areaId);
         HLAinteger32BE _queueLength = encoderFactory.createHLAinteger32BE(queueLength);
+        HLAinteger32BE _taxiQueueLength = encoderFactory.createHLAinteger32BE(taxiQueueLength);
         attributes.put( areaHandle_areaId, _areaId.toByteArray() );
         attributes.put( areaHandle_queueLength, _queueLength.toByteArray() );
+        attributes.put( areaHandle_taxiQueueLength, _taxiQueueLength.toByteArray() );
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( areaInstanceHandle, attributes, generateTag(), time );
@@ -344,7 +349,7 @@ public class AreaFederate {
 
                 }
 //                logwithTime("czas ["+getSimTime()+"] W strefie ("+area.areaId+") nie ma ani pasażerów ani taksówek.");
-                updateInstanceValues(area.areaId, area.passengerQueue.size());
+                updateInstanceValues(area.areaId, area.passengerQueue.size(), area.taxiQueue.size());
             }
             advanceTime(1);
 //            logwithTime( "Time Advanced to " + fedamb.federateTime );
