@@ -3,12 +3,14 @@ package Taxis;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
+import hla.rti1516e.encoding.HLAfloat64BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import org.jgroups.util.Tuple;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eFloat64BE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import util.SimPar;
 
@@ -108,6 +110,7 @@ public class TaxiFederate
     protected ParameterHandle executeRide_destinationId;
     protected ParameterHandle executeRide_passengerId;
     protected ParameterHandle executeRide_taxiId;
+    protected ParameterHandle executeRide_rideTime;
 
     protected InteractionClassHandle publishNumOfAreasHandle;
     protected ParameterHandle publishNumOfAreas_numOfAreas;
@@ -243,44 +246,18 @@ public class TaxiFederate
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
         }
 
-        /////////////////////////////
-        // 7. enable time policies //
-        /////////////////////////////
-        // in this section we enable/disable all time policies
-        // note that this step is optional!
         enableTimePolicy();
         log( "Time Policy Enabled" );
 
         //////////////////////////////
         // 8. publish and subscribe //
         //////////////////////////////
-        // in this section we tell the RTI of all the data we are going to
-        // produce, and all the data we want to know about
         publishAndSubscribe();
         log( "Published and Subscribed" );
-
-//        /////////////////////////////////////
-//        // 9. register an object to update //
-//        /////////////////////////////////////
-//        ObjectInstanceHandle objectHandle = registerObject();
-//        log( "Registered Object, handle=" + objectHandle );
-
-        /////////////////////////////////////
-        // 10. do the main simulation loop //
-        /////////////////////////////////////
-        // here is where we do the meat of our work. in each iteration, we will
-        // update the attribute values of the object we registered, and will
-        // send an interaction.
 
         waitForUser();//wait for user to confirm that area has subscribed to taxi object
 
         simulationLoop();
-
-//        //////////////////////////////////////
-//        // 11. delete the object we created //
-//        //////////////////////////////////////
-//        deleteObject( objectHandle );
-//        log( "Deleted Object, handle=" + objectHandle );
 
         ////////////////////////////////////
         // 12. resign from the federation //
@@ -380,6 +357,7 @@ public class TaxiFederate
         executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
         executeRide_passengerId = rtiamb.getParameterHandle(executeRideHandle, "passengerId");
         executeRide_taxiId = rtiamb.getParameterHandle(executeRideHandle, "taxiId");
+        executeRide_rideTime = rtiamb.getParameterHandle(executeRideHandle, "rideTime");
     }
 
     private void subscribeToPublishNumOfAreasInteraction() throws RTIexception {
@@ -390,13 +368,16 @@ public class TaxiFederate
 
     public void handleInteractionExecuteRide(ParameterHandleValueMap theParameters) throws DecoderException, RTIexception {
         HLAinteger32BE buffer = new HLA1516eInteger32BE();
+        HLAfloat64BE doubleBuff = new HLA1516eFloat64BE();
         int taxiId, areaId;
+        double rideTime;
         buffer.decode(theParameters.get(executeRide_taxiId));
         taxiId = buffer.getValue();
         buffer.decode(theParameters.get(executeRide_destinationId));
         areaId = buffer.getValue();
-        taxis.get(taxiId).updateAreaId(areaId);
-        logwithTime("Taxi nr "+taxiId + " dojechało do obszaru nr " + areaId);
+        doubleBuff.decode(theParameters.get(executeRide_rideTime));
+        rideTime = doubleBuff.getValue();
+        taxis.get(taxiId).updateAreaId(areaId, rideTime+getSimTime());
     }
 
     public void setNumOfAreas(int numOfAreas){
@@ -445,7 +426,7 @@ public class TaxiFederate
         }
         while(fedamb.isRunning && getSimTime()< SimPar.simEnd){
             for(Taxi taxi : taxis){
-                if(taxi.isIsToJoinQueue()){
+                if(taxi.isIsToJoinQueue(getSimTime())){
                     updateInstanceValues(taxi.taxiId, taxi.areaId);
                     taxi.setIsToJoinQueue(false);
                 }

@@ -30,10 +30,10 @@ public class AreaFederate {
     private List<Area> areasList;
 
     double[][] rideTimes = {
-            {0.0, 200.0, 250.0, 300.0},
-            {200.0, 0.0, 200.0, 250.0},
-            {250.0, 200.0, 0.0, 200.0},
-            {300.0, 250.0, 200.0, 0.0}
+            {0.0, 20.0, 25.0, 30.0},
+            {20.0, 0.0, 20.0, 25.0},
+            {25.0, 20.0, 0.0, 20.0},
+            {30.0, 25.0, 20.0, 0.0}
     };
 
     private List<Tuple<Integer, Integer>> taxisList; //id, currentAreaId
@@ -330,16 +330,16 @@ public class AreaFederate {
         {
             for (Area area : areasList) {
                 if (area.passengerQueue.size() > 0) {
-                    int passengerToRide = area.passengerQueue.pop();
                     if (area.taxiQueue.size() > 0) {
                         //jest taxuwa i jest pasazer
+                        int passengerToRide = area.passengerQueue.pop();
                         int passengerDestinationId = passengersList.stream().filter(x -> x.getVal1() == passengerToRide).findFirst().get().getVal3();
                         int taxiToGetPassenger = area.taxiQueue.pop();
 
                         handleExecuteRideInteraction(area.areaId, passengerToRide, passengerDestinationId, taxiToGetPassenger);
                     }
                     else{
-                        logwithTime(" W strefie ("+area.areaId+") pasażer o id ("+passengerToRide+")"+" oczekuje na przyjazd taksówki");
+                        logwithTime(" W strefie ("+area.areaId+") pasażer o id ("+area.passengerQueue.peek()+")"+" oczekuje na przyjazd taksówki");
                     }
 
                 }
@@ -367,7 +367,7 @@ public class AreaFederate {
 
 
     private void handleExecuteRideInteraction(int areaId, int passengerToRide, int passengerDestinationId, int taxiToGetPassenger) throws FederateNotExecutionMember, NotConnected, NameNotFound, InvalidInteractionClassHandle, RTIinternalError, InvalidLogicalTime, InteractionClassNotPublished, InteractionParameterNotDefined, InteractionClassNotDefined, SaveInProgress, RestoreInProgress {
-        ParameterHandleValueMap params = rtiamb.getParameterHandleValueMapFactory().create(3);
+        ParameterHandleValueMap params = rtiamb.getParameterHandleValueMapFactory().create(4);
         params.put(
                 rtiamb.getParameterHandle(executeRide, "passengerId"),
                 encoderFactory.createHLAinteger32BE(passengerToRide).toByteArray()
@@ -380,8 +380,13 @@ public class AreaFederate {
                 rtiamb.getParameterHandle(executeRide, "destinationId"),
                 encoderFactory.createHLAinteger32BE(passengerDestinationId).toByteArray()
         );
+
+        params.put(
+                rtiamb.getParameterHandle(executeRide, "rideTime"),
+                encoderFactory.createHLAfloat64BE(getRideTime(areaId, passengerDestinationId)).toByteArray()
+        );
         logwithTime("W strefie ("+ areaId +") pasażer o id ("+ passengerToRide +")"+" wsiadł do taksówki ["+ taxiToGetPassenger +"] i pojechał do strefy ["+ passengerDestinationId +"]");
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead + getRideTime(areaId, passengerDestinationId) );
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.sendInteraction(executeRide, params, generateTag(), time);
     }
 

@@ -37,6 +37,7 @@ public class PassengerFederate {
     protected ParameterHandle executeRide_destinationId;
     protected ParameterHandle executeRide_passengerId;
     protected ParameterHandle executeRide_taxiId;
+    protected ParameterHandle executeRide_rideTime;
 
     protected InteractionClassHandle publishNumOfAreasHandle;
     protected ParameterHandle publishNumOfAreas_numOfAreas;
@@ -215,6 +216,7 @@ public class PassengerFederate {
         executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
         executeRide_passengerId = rtiamb.getParameterHandle(executeRideHandle, "passengerId");
         executeRide_taxiId = rtiamb.getParameterHandle(executeRideHandle, "taxiId");
+        executeRide_rideTime = rtiamb.getParameterHandle(executeRideHandle, "rideTime");
     }
 
     private void subscribeToPublishNumOfAreasInteraction() throws RTIexception {

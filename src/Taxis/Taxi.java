@@ -8,6 +8,7 @@ public class Taxi {
     public int areaId;
     private static int idenum = 0;
     private boolean isToJoinQueue;
+    private double timeToRide=0;
 
     public Taxi(int areaId) {
         this.taxiId = idenum++;
@@ -15,8 +16,9 @@ public class Taxi {
         isToJoinQueue = true;
     }
 
-    public void updateAreaId(int areaId) throws RTIexception {
+    public void updateAreaId(int areaId, double time) throws RTIexception {
         this.areaId = areaId;
+        timeToRide=time;
         isToJoinQueue = true;
     }
 
@@ -24,8 +26,8 @@ public class Taxi {
         this.isToJoinQueue = isToJoinQueue;
     }
 
-    public boolean isIsToJoinQueue(){
-        return isToJoinQueue;
+    public boolean isIsToJoinQueue( double simTime){
+        return isToJoinQueue && simTime>=timeToRide;
     }
 
 }

@@ -36,6 +36,7 @@ public class StatisticFederate extends Thread{
     private AnchorPane pane;
     private ArrayList<Label> passQueues;
     private ArrayList<Label> taxiQueues;
+    private Label ridesNum, waitingNum, timeLabel, waitingMean;
 
     public static final String READY_TO_RUN = "ReadyToRun";
 
@@ -49,6 +50,7 @@ public class StatisticFederate extends Thread{
     protected ParameterHandle executeRide_destinationId;
     protected ParameterHandle executeRide_passengerId;
     protected ParameterHandle executeRide_taxiId;
+    protected ParameterHandle executeRide_rideTime;
 
     protected ObjectClassHandle areaHandle;
     protected AttributeHandle areaHandle_areaId;
@@ -57,9 +59,11 @@ public class StatisticFederate extends Thread{
 
     private List<Tuple<Integer, MonitoredVar>> areaLengths;
     private int rideCounter =0;
+    private double sumOfWaiting=0;
 
     public StatisticFederate(Label passNum1, Label passNum2, Label passNum3, Label passNum4,
-                             Label taxiNum1, Label taxiNum2, Label taxiNum3, Label taxiNum4) {
+                             Label taxiNum1, Label taxiNum2, Label taxiNum3, Label taxiNum4,
+                             Label ridesNum, Label waitingNum, Label timeLabel, Label waitingMean) {
         passQueues = new ArrayList<>();
         taxiQueues = new ArrayList<>();
         passQueues.add(passNum1);
@@ -70,6 +74,10 @@ public class StatisticFederate extends Thread{
         taxiQueues.add(taxiNum2);
         taxiQueues.add(taxiNum3);
         taxiQueues.add(taxiNum4);
+        this.ridesNum=ridesNum;
+        this.waitingNum=waitingNum;
+        this.timeLabel = timeLabel;
+        this.waitingMean = waitingMean;
     }
 
     private void log(String message )
@@ -131,6 +139,7 @@ public class StatisticFederate extends Thread{
         executeRide_destinationId = rtiamb.getParameterHandle(executeRideHandle, "destinationId");
         executeRide_passengerId = rtiamb.getParameterHandle(executeRideHandle, "passengerId");
         executeRide_taxiId = rtiamb.getParameterHandle(executeRideHandle, "taxiId");
+        executeRide_rideTime = rtiamb.getParameterHandle(executeRideHandle, "rideTime");
     }
 
     private void subscribeToAreaObject() throws RTIexception {
@@ -175,11 +184,21 @@ public class StatisticFederate extends Thread{
         Platform.runLater(
                 () ->{
                     passQueues.get(areaId).setText(queueLength+"");
+                    int overall=0;
+                    for(Tuple<Integer, MonitoredVar> t : areaLengths){
+                        overall+=(int)(t.getVal2().getValue());
+                    }
+                    waitingNum.setText(overall+"");
                 }
         );
     }
     public void handleInteractionExecuteRide(){
         rideCounter++;
+        Platform.runLater(
+                () ->{
+                    ridesNum.setText(rideCounter+"");
+                }
+        );
     }
 
     public void runFederate( String federateName ) throws Exception{
@@ -247,7 +266,17 @@ public class StatisticFederate extends Thread{
         areaLengths = new ArrayList<>();
         while( fedamb.isRunning && getSimTime() < SimPar.simEnd)
         {
-
+            int overall=0;
+            for(Tuple<Integer, MonitoredVar> t : areaLengths){
+                overall+=(int)(t.getVal2().getValue());
+            }
+            sumOfWaiting+=overall;
+            Platform.runLater(
+                    () ->{
+                        waitingMean.setText("" + (sumOfWaiting/getSimTime()));
+                        timeLabel.setText(getSimTime()+"");
+                    }
+            );
             advanceTime(1);
 //            logwithTime( "Time Advanced to " + fedamb.federateTime );
         }
