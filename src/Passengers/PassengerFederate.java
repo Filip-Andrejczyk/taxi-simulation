@@ -227,7 +227,6 @@ public class PassengerFederate {
     private void handlePassengerSpawn() throws RTIexception {
         if(getSimTime() >= nextPassengerTime) {
             int numberOfPassengersToSpawn = random.nextInt(20) + 1;
-            //TODO PARAMETRYZACJA ROZKłADU GENEROWANIA PASAŻERÓW
             passengersList = new ArrayList<>();
             for (int i = 0; i < numberOfPassengersToSpawn; i++){
                 int originId = random.nextInt(numOfAreas);

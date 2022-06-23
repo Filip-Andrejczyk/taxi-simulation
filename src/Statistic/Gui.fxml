@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="333.0" prefWidth="882.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Statistic.GuiController">
+   <children>
+      <GridPane layoutY="7.0" prefHeight="310.0" prefWidth="882.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints maxHeight="310.0" minHeight="0.0" prefHeight="258.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="410.0" minHeight="90.0" prefHeight="152.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <HBox prefHeight="0.0" prefWidth="882.0" GridPane.rowIndex="1">
+               <children>
+                  <Button fx:id="buttonFederate" mnemonicParsing="false" text="Start Federate" />
+               </children></HBox>
+            <GridPane GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+               <columnConstraints>
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="10.0" valignment="CENTER" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+               <children>
+                  <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#808080" height="50.0" stroke="BLACK" strokeType="INSIDE" width="854.0" GridPane.halignment="CENTER" GridPane.valignment="BOTTOM" />
+                  <GridPane GridPane.rowIndex="1">
+                     <columnConstraints>
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="10.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
+                        <Rectangle id="Area1" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="100.0" stroke="BLACK" strokeType="INSIDE" width="200.0" />
+                        <Rectangle id="Area2" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="100.0" layoutX="10.0" layoutY="241.0" stroke="BLACK" strokeType="INSIDE" width="200.0" GridPane.columnIndex="1" />
+                        <Rectangle id="Area3" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="100.0" layoutX="10.0" layoutY="-8.0" stroke="BLACK" strokeType="INSIDE" width="200.0" GridPane.columnIndex="2" />
+                        <Rectangle id="Area4" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="100.0" layoutX="502.0" layoutY="241.0" stroke="BLACK" strokeType="INSIDE" width="200.0" GridPane.columnIndex="3" />
+                        <Label text="Area 1" textFill="#f5f124">
+                           <font>
+                              <Font name="System Bold" size="19.0" />
+                           </font>
+                        </Label>
+                        <Label layoutX="95.0" layoutY="475.0" text="Area 2" textFill="#f5f124" GridPane.columnIndex="1">
+                           <font>
+                              <Font name="System Bold" size="19.0" />
+                           </font>
+                        </Label>
+                        <Label layoutX="95.0" layoutY="99.0" text="Area 3" textFill="#f5f124" GridPane.columnIndex="2">
+                           <font>
+                              <Font name="System Bold" size="19.0" />
+                           </font>
+                        </Label>
+                        <Label layoutX="95.0" layoutY="99.0" text="Area 4" textFill="#f5f124" GridPane.columnIndex="3">
+                           <font>
+                              <Font name="System Bold" size="19.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </GridPane>
+               </children>
+            </GridPane>
+         </children>
+      </GridPane>
+      <HBox layoutX="130.0" layoutY="120.0">
+         <children>
+            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@pedestrian.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="passNum1" text="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <padding>
+                  <Insets right="5.0" />
+               </padding>
+            </Label>
+            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@taxi.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="taxiNum1" layoutX="35.0" layoutY="10.0" text="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <padding>
+                  <Insets left="5.0" right="5.0" />
+               </padding>
+            </Label>
+         </children>
+      </HBox>
+      <HBox layoutX="350.0" layoutY="120.0">
+         <children>
+             <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                 <image>
+                     <Image url="@pedestrian.png" />
+                 </image>
+             </ImageView>
+            <Label fx:id="passNum2" text="0">
+               <HBox.margin>
+                  <Insets right="5.0" />
+               </HBox.margin>
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@taxi.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="taxiNum2" layoutX="35.0" layoutY="10.0" text="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <padding>
+                  <Insets left="5.0" right="5.0" />
+               </padding>
+            </Label>
+         </children>
+      </HBox>
+      <HBox layoutX="565.0" layoutY="120.0">
+         <children>
+            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@pedestrian.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="passNum3" text="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <padding>
+                  <Insets right="5.0" />
+               </padding>
+            </Label>
+            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@taxi.png" />
+               </image>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </ImageView>
+            <Label fx:id="taxiNum3" text="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <padding>
+                  <Insets left="5.0" right="5.0" />
+               </padding>
+            </Label>
+         </children>
+      </HBox>
+      <HBox layoutX="785.0" layoutY="120.0">
+         <children>
+            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@pedestrian.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="passNum4" text="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <padding>
+                  <Insets right="5.0" />
+               </padding>
+            </Label>
+            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@taxi.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="taxiNum4" text="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <padding>
+                  <Insets left="5.0" right="5.0" />
+               </padding>
+            </Label>
+         </children>
+      </HBox>
+   </children>
+</AnchorPane>

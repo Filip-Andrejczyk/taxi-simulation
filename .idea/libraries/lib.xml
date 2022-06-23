@@ -1,11 +1,13 @@
 <component name="libraryTable">
-  <library name="portico2016.05.28">
+  <library name="lib">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/portico2016.05.28.jar!/" />
       <root url="file://$PATH_TO_FX$" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PATH_TO_FX$" />
+    </SOURCES>
     <jarDirectory url="file://$PATH_TO_FX$" recursive="false" />
+    <jarDirectory url="file://$PATH_TO_FX$" recursive="false" type="SOURCES" />
   </library>
 </component>

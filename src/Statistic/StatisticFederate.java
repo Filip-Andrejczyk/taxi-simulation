@@ -14,6 +14,9 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import javafx.application.Platform;
+import javafx.scene.control.Label;
+import javafx.scene.layout.AnchorPane;
 import org.jgroups.util.Tuple;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import util.SimPar;
@@ -28,7 +31,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class StatisticFederate{
+public class StatisticFederate extends Thread{
+
+    private AnchorPane pane;
+    private ArrayList<Label> passQueues;
+    private ArrayList<Label> taxiQueues;
+
     public static final String READY_TO_RUN = "ReadyToRun";
 
     private RTIambassador rtiamb;
@@ -50,19 +58,30 @@ public class StatisticFederate{
     private List<Tuple<Integer, MonitoredVar>> areaLengths;
     private int rideCounter =0;
 
+    public StatisticFederate(Label passNum1, Label passNum2, Label passNum3, Label passNum4,
+                             Label taxiNum1, Label taxiNum2, Label taxiNum3, Label taxiNum4) {
+        passQueues = new ArrayList<>();
+        taxiQueues = new ArrayList<>();
+        passQueues.add(passNum1);
+        passQueues.add(passNum2);
+        passQueues.add(passNum3);
+        passQueues.add(passNum4);
+        taxiQueues.add(taxiNum1);
+        taxiQueues.add(taxiNum2);
+        taxiQueues.add(taxiNum3);
+        taxiQueues.add(taxiNum4);
+    }
 
-    private void log( String message )
+    private void log(String message )
     {
         System.out.println( "StatisticFederate   : " + message );
     }
 
-    private void logwithTime( String message )
-    {
+    private void logwithTime( String message ){
         System.out.println( "czas ["+getSimTime()+"] StatisticFederate   : " + message );
     }
 
-    private void waitForUser()
-    {
+    private void waitForUser(){
         log( " >>>>>>>>>> Press Enter to Continue <<<<<<<<<<" );
         BufferedReader reader = new BufferedReader( new InputStreamReader(System.in) );
         try
@@ -76,8 +95,7 @@ public class StatisticFederate{
         }
     }
 
-    private void enableTimePolicy() throws Exception
-    {
+    private void enableTimePolicy() throws Exception{
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
         //       Portico specific. You will have to alter this if you move to a
         //       different RTI implementation. As such, we've isolated it into a
@@ -125,14 +143,12 @@ public class StatisticFederate{
         rtiamb.subscribeObjectClassAttributes(areaHandle, attributes);
     }
 
-    private void publishAndSubscribe() throws RTIexception
-    {
+    private void publishAndSubscribe() throws RTIexception{
         subscribeToAreaObject();
         subscribeToExecuteRideInteraction();
     }
 
-    private void advanceTime( double timestep ) throws RTIexception
-    {
+    private void advanceTime( double timestep ) throws RTIexception{
         // request the advance
         fedamb.isAdvancing = true;
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime + timestep );
@@ -156,13 +172,17 @@ public class StatisticFederate{
             v.setValue(queueLength, getSimTime());
             areaLengths.add(new Tuple<>(areaId, v));
         }
+        Platform.runLater(
+                () ->{
+                    passQueues.get(areaId).setText(queueLength+"");
+                }
+        );
     }
     public void handleInteractionExecuteRide(){
         rideCounter++;
     }
 
-    public void runFederate( String federateName ) throws Exception
-    {
+    public void runFederate( String federateName ) throws Exception{
         log( "Creating RTIambassador" );
         rtiamb = RtiFactoryFactory.getRtiFactory().getRtiAmbassador();
         encoderFactory = RtiFactoryFactory.getRtiFactory().getEncoderFactory();
@@ -265,29 +285,37 @@ public class StatisticFederate{
         return fedamb.federateTime;
     }
 
-    private byte[] generateTag()
-    {
+    private byte[] generateTag(){
         return ("(timestamp) "+System.currentTimeMillis()).getBytes();
     }
 
-    public static void main( String[] args )
-    {
-        // get a federate name, use "exampleFederate" as default
-        String federateName = "Statistics";
-        if( args.length != 0 )
-        {
-            federateName = args[0];
-        }
-
-        try
-        {
-            // run the example federate
-            new StatisticFederate().runFederate( federateName );
-        }
-        catch( Exception rtie )
-        {
-            // an exception occurred, just log the information and exit
-            rtie.printStackTrace();
+    @Override
+    public void run(){
+        try {
+            runFederate( "Statistics" );
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+
+//    public static void main( String[] args )
+//    {
+//        // get a federate name, use "exampleFederate" as default
+//        String federateName = "Statistics";
+//        if( args.length != 0 )
+//        {
+//            federateName = args[0];
+//        }
+//
+//        try
+//        {
+//            // run the example federate
+//            new StatisticFederate().runFederate( federateName );
+//        }
+//        catch( Exception rtie )
+//        {
+//            // an exception occurred, just log the information and exit
+//            rtie.printStackTrace();
+//        }
+//    }
 }

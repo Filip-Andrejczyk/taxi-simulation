@@ -30,10 +30,10 @@ public class AreaFederate {
     private List<Area> areasList;
 
     double[][] rideTimes = {
-            {0.0, 20.0, 25.0, 30.0},
-            {20.0, 0.0, 20.0, 25.0},
-            {25.0, 20.0, 0.0, 20.0},
-            {30.0, 25.0, 20.0, 0.0}
+            {0.0, 200.0, 250.0, 300.0},
+            {200.0, 0.0, 200.0, 250.0},
+            {250.0, 200.0, 0.0, 200.0},
+            {300.0, 250.0, 200.0, 0.0}
     };
 
     private List<Tuple<Integer, Integer>> taxisList; //id, currentAreaId
@@ -96,29 +96,13 @@ public class AreaFederate {
 
     private void enableTimePolicy() throws Exception
     {
-        // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
-        //       Portico specific. You will have to alter this if you move to a
-        //       different RTI implementation. As such, we've isolated it into a
-        //       method so that any change only needs to happen in a couple of spots
         HLAfloat64Interval lookahead = timeFactory.makeInterval( fedamb.federateLookahead );
-
-        ////////////////////////////
-        // enable time regulation //
-        ////////////////////////////
         this.rtiamb.enableTimeRegulation( lookahead );
-
-        // tick until we get the callback
         while( fedamb.isRegulating == false )
         {
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
         }
-
-        /////////////////////////////
-        // enable time constrained //
-        /////////////////////////////
         this.rtiamb.enableTimeConstrained();
-
-        // tick until we get the callback
         while( fedamb.isConstrained == false )
         {
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
@@ -133,12 +117,6 @@ public class AreaFederate {
         rtiamb.publishInteractionClass(executeRide);
         rtiamb.publishInteractionClass(publishNumOfAreas);
         publishAreaObject();
-        //sub for joinTaxiqueue:
-//        subscribeToJoinTaxiQueueInteraction();
-        //sub for joinPassengerQueue:
-        // subscribeToJoinPassengerQueueInteraction();
-
-        //sub for passenger and taxi objects
         subscribeToTaxiObject();
         subscribeToPassengerObject();
     }
@@ -185,8 +163,6 @@ public class AreaFederate {
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime + timestep );
         rtiamb.timeAdvanceRequest( time );
 
-        // wait for the time advance to be granted. ticking will tell the
-        // LRC to start delivering callbacks to the federate
         while( fedamb.isAdvancing )
         {
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
@@ -200,6 +176,7 @@ public class AreaFederate {
 
     public void updateInstanceValues( int areaId, int queueLength) throws RTIexception
     {
+        logwithTime(" areaId: " + areaId +" ql: " + queueLength);
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
         HLAinteger32BE _areaId = encoderFactory.createHLAinteger32BE(areaId);
@@ -247,13 +224,7 @@ public class AreaFederate {
         log( "Connecting..." );
         fedamb = new AreaFederateAmbassador( this );
         rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
-
-        //////////////////////////////
-        // 3. create the federation //
-        //////////////////////////////
         log( "Creating Federation..." );
-        // We attempt to create a new federation with the first three of the
-        // restaurant FOM modules covering processes, food and drink
         try
         {
             URL[] modules = new URL[]{
@@ -290,16 +261,12 @@ public class AreaFederate {
         ////////////////////////////////
         // 5. announce the sync point //
         ////////////////////////////////
-        // announce a sync point to get everyone on the same page. if the point
-        // has already been registered, we'll get a callback saying it failed,
-        // but we don't care about that, as long as someone registered it
         rtiamb.registerFederationSynchronizationPoint( READY_TO_RUN, null );
         // wait until the point is announced
         while( fedamb.isAnnounced == false )
         {
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
         }
-
         // WAIT FOR USER TO KICK US OFF
         // So that there is time to add other federates, we will wait until the
         // user hits enter before proceeding. That was, you have time to start
@@ -309,8 +276,6 @@ public class AreaFederate {
         ///////////////////////////////////////////////////////
         // 6. achieve the point and wait for synchronization //
         ///////////////////////////////////////////////////////
-        // tell the RTI we are ready to move past the sync point and then wait
-        // until the federation has synchronized on
         rtiamb.synchronizationPointAchieved( READY_TO_RUN );
         log( "Achieved sync point: " +READY_TO_RUN+ ", waiting for federation..." );
         while( fedamb.isReadyToRun == false )
@@ -318,45 +283,13 @@ public class AreaFederate {
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
         }
 
-        /////////////////////////////
-        // 7. enable time policies //
-        /////////////////////////////
-        // in this section we enable/disable all time policies
-        // note that this step is optional!
         enableTimePolicy();
         log( "Time Policy Enabled" );
 
-        //////////////////////////////
-        // 8. publish and subscribe //
-        //////////////////////////////
-        // in this section we tell the RTI of all the data we are going to
-        // produce, and all the data we want to know about
         publishAndSubscribe();
         log( "Published and Subscribed" );
 
-        /////////////////////////////////////
-        // 9. register an object to update //
-        /////////////////////////////////////
-        // ObjectInstanceHandle objectHandle = rtiamb.registerObjectInstance( areaHandle );
-        // log( "Registered Area, handle=" + objectHandle );
-
-        /////////////////////////////////////
-        // 10. do the main simulation loop //
-        /////////////////////////////////////
-        // here is where we do the meat of our work. in each iteration, we will
-        // update the attribute values of the object we registered, and will
-        // send an interaction.
-
-
-//        TO DOOOOOOOOOOOOO
         simulationLoop();
-
-        //////////////////////////////////////
-        // 11. delete the object we created //
-        //////////////////////////////////////
-//		deleteObject( objectHandle );
-//		log( "Deleted Object, handle=" + objectHandle );
-
         ////////////////////////////////////
         // 12. resign from the federation //
         ////////////////////////////////////
@@ -371,8 +304,6 @@ public class AreaFederate {
         ////////////////////////////////////////
         // 13. try and destroy the federation //
         ////////////////////////////////////////
-        // NOTE: we won't die if we can't do this because other federates
-        //       remain. in that case we'll leave it for them to clean up
         try
         {
             rtiamb.destroyFederationExecution( "ExampleFederation" );
@@ -426,8 +357,8 @@ public class AreaFederate {
                 rtiamb.getParameterHandle(publishNumOfAreas, "numOfAreas"),
                 encoderFactory.createHLAinteger32BE(numbOfAreas).toByteArray()
         );
-        HLAfloat64Time ttime = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead);
-        rtiamb.sendInteraction(publishNumOfAreas, params, generateTag(), ttime);
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead);
+        rtiamb.sendInteraction(publishNumOfAreas, params, generateTag(), time);
     }
 
     private double getRideTime(int areaId, int destId){

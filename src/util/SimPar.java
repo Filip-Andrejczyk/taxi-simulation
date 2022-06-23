@@ -1,6 +1,6 @@
 package util;
 
 public class SimPar {
-    public static double simEnd = 600.0;
-    public static int taxiNum = 4;
+    public static double simEnd = 1000.0;
+    public static int taxiNum = 2;
 }

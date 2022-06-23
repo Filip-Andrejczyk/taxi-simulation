@@ -101,6 +101,10 @@
                     <name>taxiId</name>
                     <dataType>HLAinteger32BE</dataType>
                 </parameter>
+                <parameter>
+                    <name>rideTime</name>
+                    <dataType>HLAfloat64BE</dataType>
+                </parameter>
                 <order>TimeStamp</order>
             </interactionClass>
             <interactionClass>
